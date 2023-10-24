@@ -1,7 +1,9 @@
 import { Schema, model } from 'mongoose';
-import Status from '../enums/status';
 
-const userSchema = new Schema({
+import Status from '../enums/Status';
+import UserInterface from '../interfaces/UserInterface';
+
+const userSchema = new Schema<UserInterface>({
 	username: { type: String, unique: true, required: true },
 	email: { type: String, unique: true },
 	password: { type: String, required: true },
