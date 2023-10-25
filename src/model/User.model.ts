@@ -1,14 +1,17 @@
 import { Schema, model } from 'mongoose';
 
-import Status from '../enums/Status';
-import UserInterface from '../interfaces/UserInterface';
+import User from '../interfaces/User';
 
-const userSchema = new Schema<UserInterface>({
-	username: { type: String, unique: true, required: true },
-	email: { type: String, unique: true },
-	password: { type: String, required: true },
-	status: { type: Status },
-	createdAt: { type: Date, default: new Date() }
-});
+const userSchema = new Schema<User>(
+	{
+		username: { type: String, unique: true, required: true },
+		email: { type: String, unique: true },
+		password: { type: String, required: true },
+		status: { type: Number },
+	},
+	{
+		timestamps: true,
+	}
+);
 
 export default model('Users', userSchema);

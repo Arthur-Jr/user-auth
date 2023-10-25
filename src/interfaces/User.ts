@@ -1,13 +1,11 @@
 import { ObjectId } from 'mongoose';
-import Status from '../enums/Status';
-
-interface UserInterface {
+interface User {
   _id?: ObjectId,
   username: string,
   email?: string,
   password: string,
-  status?: Status,
+  status?: number,
   createdAt?: Date,
 }
 
-export default UserInterface;
+export default User;
