@@ -1,4 +1,4 @@
-import HttpStatusCode from '../enums/httpStatusCode';
+import HttpStatusCode from '../enums/HttpStatusCode';
 import CustomError from '../interfaces/CustomError';
 
 class CustomErrorImp extends Error implements CustomError {
