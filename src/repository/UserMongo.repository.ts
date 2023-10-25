@@ -1,7 +1,6 @@
 import { Model, mongo } from 'mongoose';
 
 import CustomError from '../interfaces/CustomError';
-
 import User from '../interfaces/User';
 import HttpStatusCode from '../enums/HttpStatusCode';
 import UserRepository from '../interfaces/UserRepository';
