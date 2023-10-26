@@ -3,13 +3,17 @@ import cors from 'cors';
 import express from 'express';
 
 import ErrorMiddleware from '../middlewares/ErrorMiddleware';
+import DbConnection from '../interfaces/DbConnection';
 
 export default class App {
 	private readonly express: express.Application;
 	private readonly port = 8080;
+	private readonly db: DbConnection;
 
-	constructor() {
+	constructor(db: DbConnection) {
+		this.db = db;
 		this.express = express();
+		this.connectDb();
 		this.middlewares();
 		this.errorMiddleware();
 		this.listen();
@@ -17,6 +21,10 @@ export default class App {
 
 	public getApp(): express.Application {
 		return this.express;
+	}
+
+	private connectDb(): void {
+		this.db.connectDb();
 	}
 
 	public middlewares(): void {
