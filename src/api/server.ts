@@ -1,6 +1,8 @@
-import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
+import express from 'express';
+
+import ErrorMiddleware from '../middlewares/ErrorMiddleware';
 
 export default class App {
 	private readonly express: express.Application;
@@ -9,6 +11,7 @@ export default class App {
 	constructor() {
 		this.express = express();
 		this.middlewares();
+		this.errorMiddleware();
 		this.listen();
 	}
 
@@ -19,6 +22,10 @@ export default class App {
 	public middlewares(): void {
 		this.express.use(bodyParser.json());
 		this.express.use(cors());
+	}
+
+	public errorMiddleware(): void {
+		this.express.use(ErrorMiddleware.handleCustomError);
 	}
 
 	private listen(): void {
