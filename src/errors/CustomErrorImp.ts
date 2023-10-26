@@ -1,11 +1,12 @@
+import ErrorMessages from '../enums/ErrorMessages';
 import HttpStatusCode from '../enums/HttpStatusCode';
 import CustomError from '../interfaces/CustomError';
 
 class CustomErrorImp extends Error implements CustomError {
-	private status: number ;
+	private status: number;
 
 	constructor(msg?: string, status?: number) {
-		super(msg);
+		super(msg || ErrorMessages.INTERNAL_SERVER_ERROR);
 		this.status = status || HttpStatusCode.INTERNAL;
 	}
 
