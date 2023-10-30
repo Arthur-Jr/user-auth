@@ -8,8 +8,9 @@ import UserRepository from '../interfaces/UserRepository';
 import ZodPayloadValidator, { userRegisterSchema } from '../zod/ZodPayloadValidator';
 import Auth from '../interfaces/Auth';
 import JwtAuth from '../auth/JwtAuth';
+import IRegisterService from '../interfaces/IRegisterService';
 
-class RegisterService extends UserService {
+class RegisterService extends UserService implements IRegisterService {
 	constructor(
 		userRepository: UserRepository,
 		payloadValidator: PayloadValidator,
@@ -19,7 +20,7 @@ class RegisterService extends UserService {
 		super(userRepository, payloadValidator, customError, auth);
 	}
 
-	public async registerNewUser(userData: User) {
+	public async registerNewUser(userData: User): Promise<{ token: string }> {
 		try {
 			this.payloadValidator.validatePayload(userData);
 			const { username, status } = await this.userRepository.registerUser(userData);
