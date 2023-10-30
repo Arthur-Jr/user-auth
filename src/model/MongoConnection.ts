@@ -1,5 +1,6 @@
 import DbConnection from '../interfaces/DbConnection';
 import mongoose from 'mongoose';
+import 'dotenv/config';
 
 class MongoConnection implements DbConnection {
 	private readonly uri: string;
