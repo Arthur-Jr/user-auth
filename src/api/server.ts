@@ -4,6 +4,7 @@ import express from 'express';
 
 import ErrorMiddleware from '../middlewares/ErrorMiddleware';
 import DbConnection from '../interfaces/DbConnection';
+import userRouter from '../router/user.router';
 
 export default class App {
 	private readonly express: express.Application;
@@ -15,6 +16,7 @@ export default class App {
 		this.express = express();
 		this.connectDb();
 		this.middlewares();
+		this.setRouter();
 		this.errorMiddleware();
 		this.listen();
 	}
@@ -34,6 +36,10 @@ export default class App {
 
 	public errorMiddleware(): void {
 		this.express.use(ErrorMiddleware.handleCustomError);
+	}
+
+	public setRouter() {
+		this.express.use('/user', userRouter);
 	}
 
 	private listen(): void {
