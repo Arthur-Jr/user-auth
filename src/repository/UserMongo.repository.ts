@@ -5,6 +5,7 @@ import User from '../interfaces/User';
 import HttpStatusCode from '../enums/HttpStatusCode';
 import UserRepository from '../interfaces/UserRepository';
 import UserModel from '../model/User.model';
+import ErrorMessages from '../enums/ErrorMessages';
 
 class UserMongoRepository implements UserRepository {
 	private readonly model: Model<User>;
@@ -18,10 +19,17 @@ class UserMongoRepository implements UserRepository {
 	}
 
 	public handleRepositoryError(err: unknown, customError: CustomError): void {
+		const DUPLICATE_FIELD_ERROR_CODE = 11000;
+
 		if (err instanceof mongo.MongoError) {
-			customError.setMessage('');
-			customError.setStatus(HttpStatusCode.CONFLICT);
-			console.log(customError);
+			switch(err.code) {
+			case DUPLICATE_FIELD_ERROR_CODE:
+				customError.setMessage(err.message.split('{ ')[1].replace('}', '') + ErrorMessages.DUPLICATED_FIELD);
+				customError.setStatus(HttpStatusCode.CONFLICT);
+				throw customError;
+			default:
+				throw customError;
+			}
 		}
 	}
 }
