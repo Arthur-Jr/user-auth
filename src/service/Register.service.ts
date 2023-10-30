@@ -6,19 +6,30 @@ import UserService from './User.service';
 import UserMongoRepository from '../repository/UserMongo.repository';
 import UserRepository from '../interfaces/UserRepository';
 import ZodPayloadValidator, { userRegisterSchema } from '../zod/ZodPayloadValidator';
+import Auth from '../interfaces/Auth';
+import JwtAuth from '../auth/JwtAuth';
 
 class RegisterService extends UserService {
-	constructor(userRepository: UserRepository, payloadValidator: PayloadValidator, customError: CustomError) {
-		super(userRepository, payloadValidator, customError);
+	constructor(
+		userRepository: UserRepository,
+		payloadValidator: PayloadValidator,
+		customError: CustomError,
+		auth: Auth,
+	) {
+		super(userRepository, payloadValidator, customError, auth);
 	}
 
-	public registerNewUser(userData: User) {
+	public async registerNewUser(userData: User) {
 		try {
 			this.payloadValidator.validatePayload(userData);
-			console.log(userData);
+			const { username, status } = await this.userRepository.registerUser(userData);
+			const token = this.auth.getToken({ username, status });
+
+			return { token };
 		} catch(err: unknown) {
 			this.payloadValidator.handleValidateError(err, this.customError);
 			this.userRepository.handleRepositoryError(err, this.customError);
+			throw this.customError;
 		}
 	}
 }
@@ -26,5 +37,6 @@ class RegisterService extends UserService {
 export default new RegisterService(
 	UserMongoRepository,
 	new ZodPayloadValidator(userRegisterSchema),
-	new CustomErrorImp()
+	new CustomErrorImp(),
+	new JwtAuth(),
 );
