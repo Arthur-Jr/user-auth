@@ -4,7 +4,7 @@ interface User {
   username: string,
   email?: string,
   password: string,
-  status?: number,
+  status: number,
   createdAt?: Date,
 }
 
