@@ -22,7 +22,7 @@ class ZodPayloadValidator implements PayloadValidator {
 		if (err instanceof ZodError) {
 			customError.setMessage(err.issues[0].message);
 			customError.setStatus(HttpStatusCode.BAD_REQUEST);
-			console.log(customError);
+			throw customError;
 		}
 	}
 }
