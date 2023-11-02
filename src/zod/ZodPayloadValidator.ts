@@ -20,7 +20,14 @@ class ZodPayloadValidator implements PayloadValidator {
 
 	public handleValidateError(err: unknown, customError: CustomError): void {
 		if (err instanceof ZodError) {
-			customError.setMessage(err.issues[0].message);
+			switch(err.issues[0].code) {
+			case 'invalid_type':
+				customError.setMessage(err.issues[0].path[0] + ' is ' + err.issues[0].message + '!');
+				break;
+			default:
+				customError.setMessage(err.issues[0].message);
+			}
+
 			customError.setStatus(HttpStatusCode.BAD_REQUEST);
 			throw customError;
 		}
@@ -31,6 +38,6 @@ export const userRegisterSchema = z.object({
 	username: z.string().min(3, { message: ErrorMessages.SHORT_USERNAME }),
 	email: z.string().email(),
 	password: z.string().min(6, { message: ErrorMessages.SHORT_PASSWORD }),
-});
+}).partial({ email: true }).required({ username: true, password: true });
 
 export default ZodPayloadValidator;
