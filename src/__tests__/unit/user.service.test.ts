@@ -16,6 +16,7 @@ describe('User route service unit tests:', () => {
 	let customError = new CustomErrorImp();
 	let service = new RegisterService(UserMongoRepository, mockValidator, customError, mockAuth);
 	const userData = { username: 'test', email: 'test@email.com', password: 'testpass' };
+	const userTestData = { username: 'test', password: 'testpass' };
 	const testError = new Error('test Error');
 
 	beforeEach(() => {
@@ -25,6 +26,24 @@ describe('User route service unit tests:', () => {
   
 	afterEach(() => {
 		vi.clearAllMocks();
+	});
+
+	it('Register test user: should return a token if everything is okay ', async () => {
+		const expectedValue = { token: 'test' };
+
+		mockValidator.validatePayload = vi.fn();
+		UserMongoRepository.registerUser = vi.fn().mockImplementation(({ username, status }: User) => ({ username, status }));
+		mockAuth.getToken = vi.fn().mockImplementation((_x) => expectedValue.token);
+
+		const serviceReturn = await service.registerNewUser(userTestData);
+
+		expect(mockValidator.validatePayload).toBeCalledTimes(1);
+		expect(mockValidator.validatePayload).toBeCalledWith(userTestData);
+		expect(UserMongoRepository.registerUser).toBeCalledTimes(1);
+		expect(UserMongoRepository.registerUser).toBeCalledWith({ ...userTestData, status: Status.TEST_ACC });
+		expect(mockAuth.getToken).toBeCalledTimes(1);
+		expect(mockAuth.getToken).toBeCalledWith({ username: userTestData.username, status: Status.TEST_ACC });
+		expect(serviceReturn).toStrictEqual(expectedValue);
 	});
 
 	it('Register new user: should return a token if everything is okay', async () => {

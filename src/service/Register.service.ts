@@ -24,8 +24,10 @@ export class RegisterService extends UserService implements IRegisterService {
 	public async registerNewUser(userData: User): Promise<{ token: string }> {
 		try {
 			this.payloadValidator.validatePayload(userData);
-			const { username } = await this.userRepository.registerUser({ ...userData, status: Status.VALID_ACC });
-			const token = this.auth.getToken({ username, status: Status.VALID_ACC });
+			const accType = userData.email ? Status.VALID_ACC : Status.TEST_ACC;
+
+			const { username } = await this.userRepository.registerUser({ ...userData, status: accType});
+			const token = this.auth.getToken({ username, status: accType });
 
 			return { token };
 		} catch(err: unknown) {
