@@ -9,8 +9,9 @@ import ZodPayloadValidator, { userRegisterSchema } from '../zod/ZodPayloadValida
 import Auth from '../interfaces/Auth';
 import JwtAuth from '../auth/JwtAuth';
 import IRegisterService from '../interfaces/IRegisterService';
+import Status from '../enums/Status';
 
-class RegisterService extends UserService implements IRegisterService {
+export class RegisterService extends UserService implements IRegisterService {
 	constructor(
 		userRepository: UserRepository,
 		payloadValidator: PayloadValidator,
@@ -23,8 +24,8 @@ class RegisterService extends UserService implements IRegisterService {
 	public async registerNewUser(userData: User): Promise<{ token: string }> {
 		try {
 			this.payloadValidator.validatePayload(userData);
-			const { username, status } = await this.userRepository.registerUser(userData);
-			const token = this.auth.getToken({ username, status });
+			const { username } = await this.userRepository.registerUser({ ...userData, status: Status.VALID_ACC });
+			const token = this.auth.getToken({ username, status: Status.VALID_ACC });
 
 			return { token };
 		} catch(err: unknown) {
