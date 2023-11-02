@@ -22,7 +22,7 @@ describe('User route repository tests', () => {
 		vi.clearAllMocks();
 	});
 
-	it('Register new user: should return user added to the DB', async () => {
+	it('Register new user: should return user added to DB', async () => {
 		UserModel.create = vi.fn().mockImplementation((x: User) => x);
 		const result = await UserMongoRepository.registerUser(userData);
 
@@ -34,7 +34,7 @@ describe('User route repository tests', () => {
 		expect(result.password).toBe(userData.password);
 	});
 
-	it('Register test user: should ', async () => {
+	it('Register test user: should return test user added to DB', async () => {
 		const result = await UserMongoRepository.registerTestUser(userTestData);
 
 		expect(UserModel.create).toBeCalledTimes(1);
