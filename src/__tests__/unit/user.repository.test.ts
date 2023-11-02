@@ -11,7 +11,6 @@ import Status from '../../enums/Status';
 
 describe('User route repository tests', () => {
 	const userData = { username: 'test', email: 'test@email.com', password: 'testpass', status: Status.VALID_ACC };
-	const userTestData = { username: 'testUser', password: 'testPass', status: Status.TEST_ACC };
 	let customError = new CustomErrorImp();
   
 	beforeEach(() => {
@@ -32,17 +31,6 @@ describe('User route repository tests', () => {
 		expect(result.email).toBe(userData.email);
 		expect(result.status).toBe(Status.VALID_ACC);
 		expect(result.password).toBe(userData.password);
-	});
-
-	it('Register test user: should return test user added to DB', async () => {
-		const result = await UserMongoRepository.registerTestUser(userTestData);
-
-		expect(UserModel.create).toBeCalledTimes(1);
-		expect(UserModel.create).toBeCalledWith(userTestData);
-		expect(result.username).toBe(userTestData.username);
-		expect(result.email).toBe(undefined);
-		expect(result.status).toBe(Status.TEST_ACC);
-		expect(result.password).toBe(userTestData.password);
 	});
 
 	it('Handle repository error: should throw a custom erro if its a duplicate mongo error', () => {

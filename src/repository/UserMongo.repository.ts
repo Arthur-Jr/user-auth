@@ -18,10 +18,6 @@ class UserMongoRepository implements UserRepository {
 		return this.model.create(userData);
 	}
 
-	public async registerTestUser(userData: User): Promise<User> {
-		return this.model.create(userData);
-	}
-
 	public handleRepositoryError(err: unknown, customError: CustomError): void {
 		const DUPLICATE_FIELD_ERROR_CODE = 11000;
 
