@@ -9,19 +9,23 @@ import User from '../../interfaces/User';
 import { RegisterService } from '../../service/Register.service';
 import Status from '../../enums/Status';
 import ZodPayloadValidator, { userRegisterSchema } from '../../zod/ZodPayloadValidator';
+import BCryptPassword from '../../crypt/BCryptPassword';
+import IRegisterService from '../../interfaces/IRegisterService';
 
 describe('User route service unit tests:', () => {
 	const mockValidator = new ZodPayloadValidator(userRegisterSchema);
 	const mockAuth = new JwtAuth();
+	const mockCrypt = new BCryptPassword();
 	let customError = new CustomErrorImp();
-	let service = new RegisterService(UserMongoRepository, mockValidator, customError, mockAuth);
+	let service: IRegisterService;
 	const userData = { username: 'test', email: 'test@email.com', password: 'testpass' };
 	const userTestData = { username: 'test', password: 'testpass' };
+	const cryptedPassword = 'cryptedPassword';
 	const testError = new Error('test Error');
 
 	beforeEach(() => {
 		customError = new CustomErrorImp();
-		service = new RegisterService(UserMongoRepository, mockValidator, customError, mockAuth);
+		service = new RegisterService(UserMongoRepository, mockValidator, customError, mockAuth, mockCrypt);
 	});
   
 	afterEach(() => {
@@ -33,6 +37,7 @@ describe('User route service unit tests:', () => {
 
 		mockValidator.validatePayload = vi.fn();
 		UserMongoRepository.registerUser = vi.fn().mockImplementation(({ username, status }: User) => ({ username, status }));
+		mockCrypt.cryptPassword = vi.fn().mockImplementation(() => cryptedPassword);
 		mockAuth.getToken = vi.fn().mockImplementation((_x) => expectedValue.token);
 
 		const serviceReturn = await service.registerNewUser(userTestData);
@@ -40,7 +45,9 @@ describe('User route service unit tests:', () => {
 		expect(mockValidator.validatePayload).toBeCalledTimes(1);
 		expect(mockValidator.validatePayload).toBeCalledWith(userTestData);
 		expect(UserMongoRepository.registerUser).toBeCalledTimes(1);
-		expect(UserMongoRepository.registerUser).toBeCalledWith({ ...userTestData, status: Status.TEST_ACC });
+		expect(UserMongoRepository.registerUser).toBeCalledWith({ ...userTestData, password: cryptedPassword, status: Status.TEST_ACC });
+		expect(mockCrypt.cryptPassword).toBeCalledTimes(1);
+		expect(mockCrypt.cryptPassword).toBeCalledWith(userTestData.password);
 		expect(mockAuth.getToken).toBeCalledTimes(1);
 		expect(mockAuth.getToken).toBeCalledWith({ username: userTestData.username, status: Status.TEST_ACC });
 		expect(serviceReturn).toStrictEqual(expectedValue);
@@ -51,13 +58,16 @@ describe('User route service unit tests:', () => {
 
 		mockValidator.validatePayload = vi.fn();
 		UserMongoRepository.registerUser = vi.fn().mockImplementation(({ username, status }: User) => ({ username, status }));
+		mockCrypt.cryptPassword = vi.fn().mockImplementation(() => cryptedPassword);
 		mockAuth.getToken = vi.fn().mockImplementation((_x) => expectedValue.token);
 		const serviceReturn = await service.registerNewUser(userData);
 
 		expect(mockValidator.validatePayload).toBeCalledTimes(1);
 		expect(mockValidator.validatePayload).toBeCalledWith(userData);
 		expect(UserMongoRepository.registerUser).toBeCalledTimes(1);
-		expect(UserMongoRepository.registerUser).toBeCalledWith({ ...userData, status: Status.VALID_ACC });
+		expect(UserMongoRepository.registerUser).toBeCalledWith({ ...userData, password: cryptedPassword, status: Status.VALID_ACC });
+		expect(mockCrypt.cryptPassword).toBeCalledTimes(1);
+		expect(mockCrypt.cryptPassword).toBeCalledWith(userData.password);
 		expect(mockAuth.getToken).toBeCalledTimes(1);
 		expect(mockAuth.getToken).toBeCalledWith({ username: userData.username, status: Status.VALID_ACC });
 		expect(serviceReturn).toStrictEqual(expectedValue);
@@ -90,6 +100,7 @@ describe('User route service unit tests:', () => {
 
 	it('Register new user: should throw a custom Error if repository throw error.', async () => {
 		try {
+			mockCrypt.cryptPassword = vi.fn().mockImplementation(() => cryptedPassword);
 			mockValidator.validatePayload = vi.fn();
 			mockValidator.handleValidateError = vi.fn();
 			UserMongoRepository.registerUser = vi.fn().mockImplementation(() => {
@@ -105,6 +116,7 @@ describe('User route service unit tests:', () => {
 			await service.registerNewUser(userData);
 		} catch(err) {
 			if (err instanceof CustomErrorImp) {
+				expect(mockCrypt.cryptPassword).toBeCalledTimes(1);
 				expect(mockValidator.validatePayload).toBeCalledTimes(1);
 				expect(mockValidator.handleValidateError).toBeCalledTimes(1);
 				expect(UserMongoRepository.registerUser).toBeCalledTimes(1);
@@ -118,6 +130,7 @@ describe('User route service unit tests:', () => {
 
 	it('Register new user: should throw a internal server error if occur an unknown error', async () => {
 		try {
+			mockCrypt.cryptPassword = vi.fn().mockImplementation(() => cryptedPassword);	
 			mockValidator.validatePayload = vi.fn();
 			mockValidator.handleValidateError = vi.fn();
 			UserMongoRepository.registerUser = vi.fn().mockImplementation(() => {
@@ -128,6 +141,7 @@ describe('User route service unit tests:', () => {
 			await service.registerNewUser(userData);
 		} catch(err) {
 			if (err instanceof CustomErrorImp) {
+				expect(mockCrypt.cryptPassword).toBeCalledTimes(1);
 				expect(mockValidator.validatePayload).toBeCalledTimes(1);
 				expect(mockValidator.handleValidateError).toBeCalledTimes(1);
 				expect(UserMongoRepository.registerUser).toBeCalledTimes(1);

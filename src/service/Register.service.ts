@@ -10,6 +10,8 @@ import Auth from '../interfaces/Auth';
 import JwtAuth from '../auth/JwtAuth';
 import IRegisterService from '../interfaces/IRegisterService';
 import Status from '../enums/Status';
+import PasswordCrypt from '../interfaces/PasswordCrypt';
+import BCryptPassword from '../crypt/BCryptPassword';
 
 export class RegisterService extends UserService implements IRegisterService {
 	constructor(
@@ -17,18 +19,26 @@ export class RegisterService extends UserService implements IRegisterService {
 		payloadValidator: PayloadValidator,
 		customError: CustomError,
 		auth: Auth,
+		crypt: PasswordCrypt,
 	) {
-		super(userRepository, payloadValidator, customError, auth);
+		super(userRepository, payloadValidator, customError, auth, crypt);
 	}
 
 	public async registerNewUser(userData: User): Promise<{ token: string }> {
 		try {
 			this.payloadValidator.validatePayload(userData);
 			const accType = userData.email ? Status.VALID_ACC : Status.TEST_ACC;
+			const cryptedPassword = await this.crypt.cryptPassword(userData.password);
 
-			const { username } = await this.userRepository.registerUser({ ...userData, status: accType});
+			const { username } = await this.userRepository.registerUser(
+				{
+					...userData,
+					password: cryptedPassword,
+					status: accType
+				}
+			);
+		
 			const token = this.auth.getToken({ username, status: accType });
-
 			return { token };
 		} catch(err: unknown) {
 			this.payloadValidator.handleValidateError(err, this.customError);
@@ -43,4 +53,5 @@ export default new RegisterService(
 	new ZodPayloadValidator(userRegisterSchema),
 	new CustomErrorImp(),
 	new JwtAuth(),
+	new BCryptPassword()
 );
