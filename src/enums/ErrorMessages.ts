@@ -3,6 +3,7 @@ enum ErrorMessages {
   SHORT_PASSWORD = 'Password must have 6 or more character!',
   DUPLICATED_FIELD = 'already in use!',
   INTERNAL_SERVER_ERROR = 'Internal Server Error!',
+  INVALID_DATA_LOGIN = 'Incorrect username/email or password!'
 }
 
 export default ErrorMessages;
