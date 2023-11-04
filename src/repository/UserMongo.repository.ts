@@ -18,6 +18,14 @@ class UserMongoRepository implements UserRepository {
 		return this.model.create(userData);
 	}
 
+	public async findUserByUsername(username: string): Promise<User | null>{
+		return this.model.findOne({ username });
+	}
+
+	public async findUserByEmail(email: string): Promise<User | null> {
+		return this.model.findOne({ email });
+	}
+
 	public handleRepositoryError(err: unknown, customError: CustomError): void {
 		const DUPLICATE_FIELD_ERROR_CODE = 11000;
 
