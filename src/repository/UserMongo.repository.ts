@@ -6,6 +6,7 @@ import HttpStatusCode from '../enums/HttpStatusCode';
 import UserRepository from '../interfaces/UserRepository';
 import UserModel from '../model/User.model';
 import ErrorMessages from '../enums/ErrorMessages';
+import UserPayload from '../interfaces/UserPayload';
 
 class UserMongoRepository implements UserRepository {
 	private readonly model: Model<User>;
@@ -14,7 +15,7 @@ class UserMongoRepository implements UserRepository {
 		this.model = model;
 	}
 
-	public async registerUser(userData: User): Promise<User> {
+	public async registerUser(userData: UserPayload): Promise<User> {
 		return this.model.create(userData);
 	}
 

@@ -4,7 +4,7 @@ import CustomError from '../interfaces/CustomError';
 import ErrorMessages from '../enums/ErrorMessages';
 import HttpStatusCode from '../enums/HttpStatusCode';
 import PayloadValidator from '../interfaces/PayloadValidator';
-import User from '../interfaces/User';
+import UserPayload from '../interfaces/UserPayload';
 
 class ZodPayloadValidator implements PayloadValidator {
 	private readonly schema: ZodObject<ZodRawShape>;
@@ -14,7 +14,7 @@ class ZodPayloadValidator implements PayloadValidator {
 		this.schema = schema;
 	}
 
-	public validatePayload(userData: User): void{
+	public validatePayload(userData: UserPayload): void{
 		this.schema.parse(userData);
 	}
 

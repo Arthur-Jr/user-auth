@@ -1,7 +1,6 @@
 import CustomError from '../interfaces/CustomError';
 import CustomErrorImp from '../errors/CustomErrorImp';
 import PayloadValidator from '../interfaces/PayloadValidator';
-import User from '../interfaces/User';
 import UserService from './User.service';
 import UserMongoRepository from '../repository/UserMongo.repository';
 import UserRepository from '../interfaces/UserRepository';
@@ -12,6 +11,7 @@ import IRegisterService from '../interfaces/IRegisterService';
 import Status from '../enums/Status';
 import PasswordCrypt from '../interfaces/PasswordCrypt';
 import BCryptPassword from '../crypt/BCryptPassword';
+import UserPayload from '../interfaces/UserPayload';
 
 export class RegisterService extends UserService implements IRegisterService {
 	constructor(
@@ -24,7 +24,7 @@ export class RegisterService extends UserService implements IRegisterService {
 		super(userRepository, payloadValidator, customError, auth, crypt);
 	}
 
-	public async registerNewUser(userData: User): Promise<{ token: string }> {
+	public async registerNewUser(userData: UserPayload): Promise<{ token: string }> {
 		try {
 			this.payloadValidator.validatePayload(userData);
 			const accType = userData.email ? Status.VALID_ACC : Status.TEST_ACC;

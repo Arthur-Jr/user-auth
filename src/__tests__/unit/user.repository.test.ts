@@ -3,11 +3,11 @@ import { mongo } from 'mongoose';
 
 import UserMongoRepository from '../../repository/UserMongo.repository';
 import UserModel from '../../model/User.model';
-import User from '../../interfaces/User';
 import CustomErrorImp from '../../errors/CustomErrorImp';
 import HttpStatusCode from '../../enums/HttpStatusCode';
 import ErrorMessages from '../../enums/ErrorMessages';
 import Status from '../../enums/Status';
+import UserPayload from '../../interfaces/UserPayload';
 
 describe('User route repository tests', () => {
 	const userData = { username: 'test', email: 'test@email.com', password: 'testpass', status: Status.VALID_ACC };
@@ -22,7 +22,7 @@ describe('User route repository tests', () => {
 	});
 
 	it('Register new user: should return user added to DB', async () => {
-		UserModel.create = vi.fn().mockImplementation((x: User) => x);
+		UserModel.create = vi.fn().mockImplementation((x: UserPayload) => x);
 		const result = await UserMongoRepository.registerUser(userData);
 
 		expect(UserModel.create).toBeCalledTimes(1);

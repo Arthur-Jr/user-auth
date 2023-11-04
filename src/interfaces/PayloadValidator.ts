@@ -1,9 +1,9 @@
 import CustomError from './CustomError';
-import User from './User';
+import UserLogin from './UserPayload';
 
 interface PayloadValidator {
 	handleValidateError(err: unknown, customError: CustomError): void,
-	validatePayload(userData: User): void,
+	validatePayload(userData: UserLogin): void,
 }
 
 export default PayloadValidator;

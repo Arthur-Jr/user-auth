@@ -1,7 +1,7 @@
-import User from './User';
+import UserPayload from './UserPayload';
 
 interface IRegisterService {
-  registerNewUser(userData: User): Promise<{ token: string }>,
+  registerNewUser(userData: UserPayload): Promise<{ token: string }>,
 }
 
 export default IRegisterService;
