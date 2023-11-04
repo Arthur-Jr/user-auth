@@ -7,7 +7,7 @@ import RegisterService from '../../service/Register.service';
 import HttpStatusCode from '../../enums/HttpStatusCode';
 import CustomErrorImp from '../../errors/CustomErrorImp';
 
-describe('User route controller unit tests:', () => {
+describe('Register controller unit tests:', () => {
 	const mockRequest = { body: {} };
 	const mockResponse = {
 		status: vi.fn().mockImplementation((_x: number) => mockResponse),
