@@ -4,7 +4,7 @@ import CustomError from '../interfaces/CustomError';
 import ErrorMessages from '../enums/ErrorMessages';
 import HttpStatusCode from '../enums/HttpStatusCode';
 import PayloadValidator from '../interfaces/PayloadValidator';
-import User from '../interfaces/User';
+import UserPayload from '../interfaces/UserPayload';
 
 class ZodPayloadValidator implements PayloadValidator {
 	private readonly schema: ZodObject<ZodRawShape>;
@@ -14,7 +14,7 @@ class ZodPayloadValidator implements PayloadValidator {
 		this.schema = schema;
 	}
 
-	public validatePayload(userData: User): void{
+	public validatePayload(userData: UserPayload): void{
 		this.schema.parse(userData);
 	}
 
@@ -39,5 +39,11 @@ export const userRegisterSchema = z.object({
 	email: z.string().email(),
 	password: z.string().min(6, { message: ErrorMessages.SHORT_PASSWORD }),
 }).partial({ email: true }).required({ username: true, password: true });
+
+export const userLoginSchema = z.object({
+	username: z.string().min(3, { message: ErrorMessages.SHORT_USERNAME }),
+	email: z.string().email(),
+	password: z.string().min(6, { message: ErrorMessages.SHORT_PASSWORD }),
+}).partial({ email: true, username: true }).required({ password: true });
 
 export default ZodPayloadValidator;

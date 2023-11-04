@@ -3,11 +3,11 @@ import { mongo } from 'mongoose';
 
 import UserMongoRepository from '../../repository/UserMongo.repository';
 import UserModel from '../../model/User.model';
-import User from '../../interfaces/User';
 import CustomErrorImp from '../../errors/CustomErrorImp';
 import HttpStatusCode from '../../enums/HttpStatusCode';
 import ErrorMessages from '../../enums/ErrorMessages';
 import Status from '../../enums/Status';
+import UserPayload from '../../interfaces/UserPayload';
 
 describe('User route repository tests', () => {
 	const userData = { username: 'test', email: 'test@email.com', password: 'testpass', status: Status.VALID_ACC };
@@ -22,7 +22,7 @@ describe('User route repository tests', () => {
 	});
 
 	it('Register new user: should return user added to DB', async () => {
-		UserModel.create = vi.fn().mockImplementation((x: User) => x);
+		UserModel.create = vi.fn().mockImplementation((x: UserPayload) => x);
 		const result = await UserMongoRepository.registerUser(userData);
 
 		expect(UserModel.create).toBeCalledTimes(1);
@@ -31,6 +31,42 @@ describe('User route repository tests', () => {
 		expect(result.email).toBe(userData.email);
 		expect(result.status).toBe(Status.VALID_ACC);
 		expect(result.password).toBe(userData.password);
+	});
+
+	it('Find user by username: should return user if user is finded', async () => {
+		UserModel.findOne = vi.fn().mockImplementation(() => userData);
+		const result = await UserMongoRepository.findUserByUsername(userData.username);
+
+		expect(UserModel.findOne).toBeCalledTimes(1);
+		expect(UserModel.findOne).toBeCalledWith({ username: userData.username });
+		expect(result?.username).toBe(userData.username);
+	});
+
+	it('Find user by username: should return null if user is not finded', async () => {
+		UserModel.findOne = vi.fn().mockImplementation(() => null);
+		const result = await UserMongoRepository.findUserByUsername(userData.username);
+
+		expect(UserModel.findOne).toBeCalledTimes(1);
+		expect(UserModel.findOne).toBeCalledWith({ username: userData.username });
+		expect(result).toBe(null);
+	});
+
+	it('Find user by email: should return user if user is finded', async () => {
+		UserModel.findOne = vi.fn().mockImplementation(() => userData);
+		const result = await UserMongoRepository.findUserByEmail(userData.email);
+
+		expect(UserModel.findOne).toBeCalledTimes(1);
+		expect(UserModel.findOne).toBeCalledWith({ email: userData.email });
+		expect(result?.email).toBe(userData.email);
+	});
+
+	it('Find user by email: should return null if user is not finded', async () => {
+		UserModel.findOne = vi.fn().mockImplementation(() => null);
+		const result = await UserMongoRepository.findUserByEmail(userData.email);
+
+		expect(UserModel.findOne).toBeCalledTimes(1);
+		expect(UserModel.findOne).toBeCalledWith({ email: userData.email });
+		expect(result).toBe(null);
 	});
 
 	it('Handle repository error: should throw a custom erro if its a duplicate mongo error', () => {
