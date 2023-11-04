@@ -40,4 +40,10 @@ export const userRegisterSchema = z.object({
 	password: z.string().min(6, { message: ErrorMessages.SHORT_PASSWORD }),
 }).partial({ email: true }).required({ username: true, password: true });
 
+export const userLoginSchema = z.object({
+	username: z.string().min(3, { message: ErrorMessages.SHORT_USERNAME }),
+	email: z.string().email(),
+	password: z.string().min(6, { message: ErrorMessages.SHORT_PASSWORD }),
+}).partial({ email: true, username: true }).required({ password: true });
+
 export default ZodPayloadValidator;
