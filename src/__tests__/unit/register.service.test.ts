@@ -12,7 +12,7 @@ import ZodPayloadValidator, { userRegisterSchema } from '../../zod/ZodPayloadVal
 import BCryptPassword from '../../crypt/BCryptPassword';
 import IRegisterService from '../../interfaces/IRegisterService';
 
-describe('User route service unit tests:', () => {
+describe('Register service unit tests:', () => {
 	const mockValidator = new ZodPayloadValidator(userRegisterSchema);
 	const mockAuth = new JwtAuth();
 	const mockCrypt = new BCryptPassword();
