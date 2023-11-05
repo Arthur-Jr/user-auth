@@ -5,6 +5,8 @@ enum ErrorMessages {
   INTERNAL_SERVER_ERROR = 'Internal Server Error!',
   INVALID_DATA_LOGIN = 'Incorrect username/email or password!',
   USER_NOT_FOUND = 'User not Found!', 
+  INVALID_USERNAME = 'Invalid username!',
+  INVALID_PASSWORD = 'Invalid Password!'
 }
 
 export default ErrorMessages;
