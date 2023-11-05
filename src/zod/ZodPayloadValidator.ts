@@ -34,16 +34,22 @@ class ZodPayloadValidator implements PayloadValidator {
 	}
 }
 
+const alphaNumRegex = /^[a-zA-Z0-9_]+$/;
+
 export const userRegisterSchema = z.object({
-	username: z.string().min(3, { message: ErrorMessages.SHORT_USERNAME }),
+	username: z.string().min(3, { message: ErrorMessages.SHORT_USERNAME })
+		.refine((value) => alphaNumRegex.test(value), { message: ErrorMessages.INVALID_USERNAME }),
 	email: z.string().email(),
-	password: z.string().min(6, { message: ErrorMessages.SHORT_PASSWORD }),
+	password: z.string().min(6, { message: ErrorMessages.SHORT_PASSWORD })
+		.refine((value) => alphaNumRegex.test(value), { message: ErrorMessages.INVALID_PASSWORD }),
 }).partial({ email: true }).required({ username: true, password: true });
 
 export const userLoginSchema = z.object({
-	username: z.string().min(3, { message: ErrorMessages.SHORT_USERNAME }),
+	username: z.string().min(3, { message: ErrorMessages.SHORT_USERNAME })
+		.refine((value) => alphaNumRegex.test(value), { message: ErrorMessages.INVALID_USERNAME }),
 	email: z.string().email(),
-	password: z.string().min(6, { message: ErrorMessages.SHORT_PASSWORD }),
+	password: z.string().min(6, { message: ErrorMessages.SHORT_PASSWORD })
+		.refine((value) => alphaNumRegex.test(value), { message: ErrorMessages.INVALID_PASSWORD }),
 }).partial({ email: true, username: true }).required({ password: true });
 
 export default ZodPayloadValidator;
