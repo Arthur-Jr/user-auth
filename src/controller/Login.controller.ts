@@ -13,7 +13,7 @@ class LoginController {
 
 	public async login(req: Request, res: Response, next: NextFunction): Promise<Response | undefined> {
 		try {
-			const token = this.loginService.login(req.body);
+			const token = await this.loginService.login(req.body);
 			return res.status(HttpStatusCode.OK).json(token);
 		} catch(err: unknown) {
 			next(err); 

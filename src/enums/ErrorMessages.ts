@@ -6,7 +6,8 @@ enum ErrorMessages {
   INVALID_DATA_LOGIN = 'Incorrect username/email or password!',
   USER_NOT_FOUND = 'User not Found!', 
   INVALID_USERNAME = 'Invalid username!',
-  INVALID_PASSWORD = 'Invalid Password!'
+  INVALID_PASSWORD = 'Invalid Password!',
+  INVALID_AUTH = 'Invalid token!',
 }
 
 export default ErrorMessages;
