@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 
 import Auth from '../interfaces/Auth';
 
@@ -9,8 +9,8 @@ class JwtAuth implements Auth {
 		return jwt.sign({ data: userData }, this.secret, { algorithm: 'HS256', expiresIn: '24h' });
 	}
 
-	decodeToken(token: string): void {
-		jwt.verify(token, this.secret);
+	decodeToken(token: string): JwtPayload | string {
+		return jwt.verify(token, this.secret);
 	}  
 }
 
