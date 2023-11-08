@@ -8,7 +8,8 @@ enum ErrorMessages {
   INVALID_USERNAME = 'Invalid username!',
   INVALID_PASSWORD = 'Invalid Password!',
   INVALID_AUTH = 'Invalid token!',
-  INVALID_ACC_TYPE = 'Invalid email or Invalid account type!'
+  INVALID_ACC_TYPE = 'Invalid account type!',
+  INVALID_EMAIL = 'Invalid email',
 }
 
 export default ErrorMessages;

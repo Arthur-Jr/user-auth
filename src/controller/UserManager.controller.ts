@@ -15,7 +15,7 @@ class UserManagerController {
   
 	public async editUser(req: ExtendedRequest, res: Response, next: NextFunction): Promise<Response | undefined> {
 		try {
-			this.userManagerService.editUser(req.body as EditUserPayload);
+			await this.userManagerService.editUser(req.body as EditUserPayload);
 			return res.status(HttpStatusCode.OK).json();
 		} catch(err) {
 			next(err);
@@ -26,6 +26,24 @@ class UserManagerController {
 		try {
 			const token = await this.userManagerService.addEmailToTestUser(req.body as EditUserPayload);
 			return res.status(HttpStatusCode.OK).json(token);
+		} catch(err) {
+			next(err);
+		}
+	}
+
+	public async getUserByUsername(req: ExtendedRequest, res: Response, next: NextFunction): Promise<Response | undefined> {
+		try {
+			const user = await this.userManagerService.getUserByUsername(req.body.username as string);
+			return res.status(HttpStatusCode.OK).json(user);
+		} catch(err) {
+			next(err);
+		}
+	}
+
+	public async deleteUser(req: ExtendedRequest, res: Response, next: NextFunction): Promise<Response | undefined> {
+		try {
+			await this.userManagerService.deleteUser(req.body as EditUserPayload);
+			return res.status(HttpStatusCode.NO_CONTENT).json();
 		} catch(err) {
 			next(err);
 		}

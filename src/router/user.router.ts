@@ -9,8 +9,11 @@ const userRouter = express.Router();
 
 userRouter.post('/register', (req, res, next) => RegisterController.registerNewUser(req, res, next));
 userRouter.post('/login', (req, res, next) => LoginController.login(req, res, next));
-userRouter.use(AuthMiddeware.handleAuthMiddleware);
+
+userRouter.use((req, res, next) => AuthMiddeware.handleAuthMiddleware(req, res, next));
 userRouter.put('/', (req, res, next) => UserManagerController.editUser(req, res, next));
 userRouter.put('/test-email', (req, res, next) => UserManagerController.addEmailToTestUser(req, res, next));
+userRouter.get('/', (req, res, next) => UserManagerController.getUserByUsername(req, res, next));
+userRouter.delete('/',(req, res, next) => UserManagerController.deleteUser(req, res, next));
 
 export default userRouter;

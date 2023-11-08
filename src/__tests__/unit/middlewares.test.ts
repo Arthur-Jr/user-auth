@@ -9,6 +9,7 @@ import HttpStatusCode from '../../enums/HttpStatusCode';
 import { AuthMiddleware } from '../../middlewares/AuthMiddeware';
 import JwtAuth from '../../auth/JwtAuth';
 import ExtendedRequest from '../../interfaces/ExtendedRequest';
+import ZodPayloadValidator, { tokenSchema } from '../../zod/ZodPayloadValidator';
 
 describe('Middlewares tests:', () => {
 	const mockRequest = { body: { username: '' }, headers: { authorization: 'testToken' } };
@@ -19,7 +20,8 @@ describe('Middlewares tests:', () => {
 	const mockNext = vi.fn();
 	let customError = new CustomErrorImp();
 	const mockAuth = new JwtAuth();
-	const AuthMiddeware = new AuthMiddleware(mockAuth, customError);
+	const mockValidator = new ZodPayloadValidator(tokenSchema);
+	const AuthMiddeware = new AuthMiddleware(mockAuth, customError, mockValidator);
 
 	beforeEach(() => {
 		customError = new CustomErrorImp();
@@ -40,6 +42,7 @@ describe('Middlewares tests:', () => {
 
 	it('Auth middleware: should call nextFunction if token is valid', () => {
 		mockAuth.decodeToken = vi.fn().mockImplementation(() => ({ data: { username: 'test' } }));
+		mockValidator.validatePayload = vi.fn();
 		AuthMiddeware.handleAuthMiddleware(mockRequest as ExtendedRequest, mockResponse as Response, mockNext);
 
 		expect(mockRequest.body.username).toBe('test');
@@ -68,6 +71,29 @@ describe('Middlewares tests:', () => {
 			if (err instanceof CustomErrorImp) {
 				expect(err.getStatus()).toBe(HttpStatusCode.UNAUTHORIZED);
 				expect(err.getMessage()).toBe(ErrorMessages.INVALID_AUTH);
+			}
+		}
+	});
+
+	it('Auth middleware: should throw error if username is invalid', () => {
+		try {
+			const err = new Error('test error');
+			mockAuth.decodeToken = vi.fn().mockImplementation(() => ({ data: { username: 'test' } }));
+			mockValidator.validatePayload = vi.fn().mockImplementation(() => {
+				throw err;
+			});
+
+			mockValidator.handleValidateError = vi.fn().mockImplementation(() => {
+				customError.setMessage('Validate Error');
+				customError.setStatus(HttpStatusCode.BAD_REQUEST);
+				throw customError;
+			});
+		
+			AuthMiddeware.handleAuthMiddleware(mockRequest as ExtendedRequest, mockResponse as Response, mockNext);
+		} catch(err) {
+			if (err instanceof CustomErrorImp) {
+				expect(err.getStatus()).toBe(HttpStatusCode.BAD_REQUEST);
+				expect(err.getMessage()).toBe('Validate Error');
 			}
 		}
 	});

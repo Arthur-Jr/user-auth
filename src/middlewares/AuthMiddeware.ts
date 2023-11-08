@@ -6,6 +6,8 @@ import CustomErrorImp from '../errors/CustomErrorImp';
 import HttpStatusCode from '../enums/HttpStatusCode';
 import ExtendedRequest from '../interfaces/ExtendedRequest';
 import ErrorMessages from '../enums/ErrorMessages';
+import PayloadValidator from '../interfaces/PayloadValidator';
+import ZodPayloadValidator, { tokenSchema } from '../zod/ZodPayloadValidator';
 
 interface authPayload {
   data: { username: string, status: number },
@@ -16,10 +18,12 @@ interface authPayload {
 export class AuthMiddleware {
 	private readonly auth: Auth;
 	private readonly customError: CustomError;
+	private readonly payloadValidator: PayloadValidator;
 
-	constructor(auth: Auth, customError: CustomError) {
+	constructor(auth: Auth, customError: CustomError, payloadValidator: PayloadValidator) {
 		this.auth = auth;
 		this.customError = customError;
+		this.payloadValidator = payloadValidator;
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -34,15 +38,17 @@ export class AuthMiddleware {
     
 			const { data } = this.auth.decodeToken(authorization) as authPayload;
 
-			if (!data) {
+			if (!data || !data.username) {
 				this.ThrowAuthError();
 				throw this.customError;
 			}
 
-			req.body.username = data.username;
+			this.payloadValidator.validatePayload({ username: data.username });
 
+			req.body.username = data.username;
 			next();
 		} catch(err) {
+			this.payloadValidator.handleValidateError(err, this.customError);
 			this.ThrowAuthError();
 		}
 	}
@@ -54,4 +60,4 @@ export class AuthMiddleware {
 	}
 }
 
-export default new AuthMiddleware(new JwtAuth(), new CustomErrorImp());
+export default new AuthMiddleware(new JwtAuth(), new CustomErrorImp(), new ZodPayloadValidator(tokenSchema));

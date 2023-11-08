@@ -22,6 +22,7 @@ describe('User manager service tests:', () => {
 	const userTestData = { username: 'test', email: 'test@email.com', password: 'cryptedPassword', status: Status.TEST_ACC };
 	let editPayload = { username: 'test', password: 'pass', email: '', newPassword: '' };
 	const testError = new Error('test Error');
+	const cryptedPassword = 'cryptPass';
 
 	beforeEach(() => {
 		customError = new CustomErrorImp();
@@ -57,6 +58,7 @@ describe('User manager service tests:', () => {
 		mockValidator.validatePayload = vi.fn();
 		UserMongoRepository.findUserByUsername = vi.fn().mockImplementation(() => userData);
 		mockCrypt.checkPassword = vi.fn();
+		mockCrypt.cryptPassword = vi.fn().mockImplementation(() => cryptedPassword);
 		UserMongoRepository.editEmail = vi.fn();
 		UserMongoRepository.editPassword = vi.fn();
 		editPayload.newPassword= 'newPass';
@@ -69,7 +71,7 @@ describe('User manager service tests:', () => {
 		expect(mockCrypt.checkPassword).toBeCalledTimes(1);
 		expect(mockCrypt.checkPassword).toBeCalledWith(editPayload.password, userData.password, customError);
 		expect(UserMongoRepository.editPassword).toBeCalledTimes(1);
-		expect(UserMongoRepository.editPassword).toBeCalledWith(editPayload.username, editPayload.newPassword);
+		expect(UserMongoRepository.editPassword).toBeCalledWith(editPayload.username, cryptedPassword);
 		expect(UserMongoRepository.editEmail).toBeCalledTimes(0);
 	});
 
@@ -77,6 +79,7 @@ describe('User manager service tests:', () => {
 		mockValidator.validatePayload = vi.fn();
 		UserMongoRepository.findUserByUsername = vi.fn().mockImplementation(() => userData);
 		mockCrypt.checkPassword = vi.fn();
+		mockCrypt.cryptPassword = vi.fn().mockImplementation(() => cryptedPassword);
 		UserMongoRepository.editEmail = vi.fn();
 		UserMongoRepository.editPassword = vi.fn();
 		editPayload.email = userData.email;
@@ -90,9 +93,32 @@ describe('User manager service tests:', () => {
 		expect(mockCrypt.checkPassword).toBeCalledTimes(1);
 		expect(mockCrypt.checkPassword).toBeCalledWith(editPayload.password, userData.password, customError);
 		expect(UserMongoRepository.editPassword).toBeCalledTimes(1);
-		expect(UserMongoRepository.editPassword).toBeCalledWith(editPayload.username, editPayload.newPassword);
+		expect(UserMongoRepository.editPassword).toBeCalledWith(editPayload.username, cryptedPassword);
 		expect(UserMongoRepository.editEmail).toBeCalledTimes(1);
 		expect(UserMongoRepository.editEmail).toBeCalledWith(editPayload.username, editPayload.email);
+	});
+
+	it('Edit user: should not edit user data if its a test acc', async () => {
+		try {
+			mockValidator.validatePayload = vi.fn();
+			UserMongoRepository.findUserByUsername = vi.fn().mockImplementation(() => userTestData);
+			mockCrypt.checkPassword = vi.fn();
+	
+			await service.editUser(editPayload);
+
+		} catch(err) {
+			if (err instanceof CustomErrorImp) {
+				expect(mockValidator.validatePayload).toBeCalledTimes(1);
+				expect(mockValidator.validatePayload).toBeCalledWith(editPayload);
+				expect(UserMongoRepository.findUserByUsername).toBeCalledTimes(1);
+				expect(UserMongoRepository.findUserByUsername).toBeCalledWith(editPayload.username);
+				expect(mockCrypt.checkPassword).toBeCalledTimes(1);
+				expect(mockCrypt.checkPassword).toBeCalledWith(editPayload.password, userData.password, customError);
+				expect(UserMongoRepository.editPassword).toBeCalledTimes(0);
+				expect(UserMongoRepository.editEmail).toBeCalledTimes(0);
+			}
+		}
+
 	});
 
 	it('Edit user: should throw an Error if payload is invalid', async () => {
@@ -218,7 +244,7 @@ describe('User manager service tests:', () => {
 
 			if(err instanceof CustomErrorImp) {
 				expect(err.getStatus()).toBe(HttpStatusCode.BAD_REQUEST);
-				expect(err.getMessage()).toBe(ErrorMessages.INVALID_ACC_TYPE);
+				expect(err.getMessage()).toBe(`${ErrorMessages.INVALID_EMAIL} or ${ErrorMessages.INVALID_ACC_TYPE}`);
 			}
 		}
 	});
@@ -273,6 +299,125 @@ describe('User manager service tests:', () => {
 				expect(mockValidator.handleValidateError).toBeCalledTimes(1);
 				expect(UserMongoRepository.findUserByUsername).toBeCalledTimes(1);
 				expect(UserMongoRepository.addEmailToTestUser).toBeCalledTimes(1);
+				expect(UserMongoRepository.handleRepositoryError).toBeCalledTimes(1);
+				expect(UserMongoRepository.handleRepositoryError).toBeCalledWith(testError, customError);
+				expect(err.getStatus()).toBe(HttpStatusCode.CONFLICT);
+				expect(err.getMessage()).toBe('Repository Error');
+			}
+		}
+	});
+
+	it('Get user by username: should return user info', async () => {
+		UserMongoRepository.findUserByUsername = vi.fn().mockImplementation(() => userData);
+		const user = await service.getUserByUsername(userData.username);
+		
+		expect(user.username).toBe(userData.username);
+		expect(user.status).toBe(userData.status);
+		expect(user.email).toBe(userData.email);
+		expect(UserMongoRepository.findUserByUsername).toBeCalledTimes(1);
+		expect(UserMongoRepository.findUserByUsername).toBeCalledWith(userData.username);
+	});
+
+	it('Get user by username: should throw a custom Error if user is not found.', async () => {
+		try {
+			UserMongoRepository.findUserByUsername = vi.fn().mockImplementation(() => null);
+			UserMongoRepository.handleRepositoryError = vi.fn();
+
+			expect(async () => {
+				await service.getUserByUsername(userData.username);
+			});
+		} catch(err) {
+			if (err instanceof CustomErrorImp) {
+				expect(UserMongoRepository.findUserByUsername).toBeCalledTimes(1);
+				expect(UserMongoRepository.handleRepositoryError).toBeCalledTimes(1);
+				expect(err.getStatus()).toBe(HttpStatusCode.NOT_FOUND);
+				expect(err.getMessage()).toBe(ErrorMessages.USER_NOT_FOUND);
+			}
+		}
+	});
+
+	it('Get user by username: should throw a custom Error if repository throw error.', async () => {
+		try {
+			UserMongoRepository.findUserByUsername = vi.fn().mockImplementation(() => {
+				throw testError;
+			});
+
+			UserMongoRepository.handleRepositoryError = vi.fn().mockImplementation(() => {
+				customError.setMessage('Repository Error');
+				customError.setStatus(HttpStatusCode.CONFLICT);
+				throw customError;
+			});
+
+			await service.getUserByUsername(userData.username);
+		} catch(err) {
+			if (err instanceof CustomErrorImp) {
+				expect(UserMongoRepository.findUserByUsername).toBeCalledTimes(1);
+				expect(UserMongoRepository.handleRepositoryError).toBeCalledTimes(1);
+				expect(UserMongoRepository.handleRepositoryError).toBeCalledWith(testError, customError);
+				expect(err.getStatus()).toBe(HttpStatusCode.CONFLICT);
+				expect(err.getMessage()).toBe('Repository Error');
+			}
+		}
+	});
+
+	it('Delete user should delete user', async () => {
+		mockValidator.validatePayload = vi.fn();
+		mockValidator.handleValidateError = vi.fn();
+		UserMongoRepository.findUserByUsername = vi.fn().mockImplementation(() => userData);
+		mockCrypt.checkPassword = vi.fn();
+		UserMongoRepository.deleteUser = vi.fn().mockImplementation(() => null);
+		await service.deleteUser(editPayload);
+		
+		expect(UserMongoRepository.deleteUser).toBeCalledTimes(1);
+		expect(UserMongoRepository.deleteUser).toBeCalledWith(editPayload.username);
+	});
+
+	it('Delete user: should throw an Error if payload is invalid', async () => {
+		try {
+			mockValidator.validatePayload = vi.fn().mockImplementation(() => {
+				throw testError;
+			});
+
+			mockValidator.handleValidateError = vi.fn().mockImplementation(() => {
+				customError.setMessage('Validate Error');
+				customError.setStatus(HttpStatusCode.BAD_REQUEST);
+				throw customError;
+			});
+
+			await service.deleteUser(editPayload);
+		} catch(err) {
+			if (err instanceof CustomErrorImp) {
+				expect(mockValidator.validatePayload).toBeCalledTimes(1);
+				expect(UserMongoRepository.findUserByUsername).toBeCalledTimes(0);
+				expect(UserMongoRepository.addEmailToTestUser).toBeCalledTimes(0);
+				expect(mockValidator.handleValidateError).toBeCalledTimes(1);
+				expect(mockValidator.handleValidateError).toBeCalledWith(testError, customError);
+				expect(err.getStatus()).toBe(HttpStatusCode.BAD_REQUEST);
+				expect(err.getMessage()).toBe('Validate Error');
+			}
+		}
+	});
+
+	it('Delete user: should throw a custom Error if repository throw error.', async () => {
+		try {
+			mockValidator.validatePayload = vi.fn();
+			mockValidator.handleValidateError = vi.fn();
+			UserMongoRepository.findUserByUsername = vi.fn().mockImplementation(() => userData);
+			mockCrypt.checkPassword = vi.fn();
+			UserMongoRepository.deleteUser = vi.fn().mockImplementation(() => {
+				throw testError;
+			});
+
+			UserMongoRepository.handleRepositoryError = vi.fn().mockImplementation(() => {
+				customError.setMessage('Repository Error');
+				customError.setStatus(HttpStatusCode.CONFLICT);
+				throw customError;
+			});
+
+			await service.deleteUser(editPayload);
+		} catch(err) {
+			if (err instanceof CustomErrorImp) {
+				expect(UserMongoRepository.findUserByUsername).toBeCalledTimes(1);
 				expect(UserMongoRepository.handleRepositoryError).toBeCalledTimes(1);
 				expect(UserMongoRepository.handleRepositoryError).toBeCalledWith(testError, customError);
 				expect(err.getStatus()).toBe(HttpStatusCode.CONFLICT);
