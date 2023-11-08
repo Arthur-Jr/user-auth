@@ -137,7 +137,6 @@ describe('User manager service tests:', () => {
 
 			await service.editUser(editPayload);
 		} catch(err) {
-			console.log(err);
 			if (err instanceof CustomErrorImp) {
 				expect(mockValidator.validatePayload).toBeCalledTimes(1);
 				expect(mockValidator.handleValidateError).toBeCalledTimes(1);
