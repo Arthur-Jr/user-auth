@@ -21,6 +21,15 @@ class UserManagerController {
 			next(err);
 		}
 	}
+
+	public async addEmailToTestUser(req: ExtendedRequest, res: Response, next: NextFunction): Promise<Response | undefined> {
+		try {
+			const token = await this.userManagerService.addEmailToTestUser(req.body as EditUserPayload);
+			return res.status(HttpStatusCode.OK).json(token);
+		} catch(err) {
+			next(err);
+		}
+	}
 }
 
 export default new UserManagerController(UserManagerServiceImp);
