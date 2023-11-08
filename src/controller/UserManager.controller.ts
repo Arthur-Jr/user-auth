@@ -39,6 +39,15 @@ class UserManagerController {
 			next(err);
 		}
 	}
+
+	public async deleteUser(req: ExtendedRequest, res: Response, next: NextFunction): Promise<Response | undefined> {
+		try {
+			await this.userManagerService.deleteUser(req.body as EditUserPayload);
+			return res.status(HttpStatusCode.NO_CONTENT).json();
+		} catch(err) {
+			next(err);
+		}
+	}
 }
 
 export default new UserManagerController(UserManagerServiceImp);
