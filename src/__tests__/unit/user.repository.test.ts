@@ -69,6 +69,22 @@ describe('User route repository tests', () => {
 		expect(result).toBe(null);
 	});
 
+	it('Edit user email: should edit email', async () => {
+		UserModel.findOneAndUpdate = vi.fn().mockImplementation(async () => userData);
+		await UserMongoRepository.editEmail(userData.username, userData.email);
+
+		expect(UserModel.findOneAndUpdate).toBeCalledTimes(1);
+		expect(UserModel.findOneAndUpdate).toBeCalledWith({ username: userData.username }, { $set: { email: userData.email } });
+	});
+
+	it('Edit user password: should edit password', async () => {
+		UserModel.findOneAndUpdate = vi.fn().mockImplementation(async () => userData);
+		await UserMongoRepository.editPassword(userData.username, userData.password);
+
+		expect(UserModel.findOneAndUpdate).toBeCalledTimes(1);
+		expect(UserModel.findOneAndUpdate).toBeCalledWith({ username: userData.username }, { $set: { password: userData.password } });
+	});
+
 	it('Handle repository error: should throw a custom erro if its a duplicate mongo error', () => {
 		try {
 			const err = new mongo.MongoError('{ username: "test" }');
