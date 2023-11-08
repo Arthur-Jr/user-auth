@@ -48,4 +48,32 @@ describe('User manager controller tests:', () => {
 		expect(mockNext).toBeCalledTimes(1);
 		expect(mockNext).toBeCalledWith(err);
 	});
+
+	it('Add email to test user: should return status 200 with a new token if email was added', async () => {
+		UserManagerServiceImp.addEmailToTestUser = vi.fn().mockImplementation(() => ({ token: 'token' }));
+		mockRequest.body = editPayload;
+		await UserManagerController.addEmailToTestUser(mockRequest as ExtendedRequest, mockResponse as Response, mockNext as NextFunction);
+
+		expect(UserManagerServiceImp.addEmailToTestUser).toBeCalledTimes(1);
+		expect(UserManagerServiceImp.addEmailToTestUser).toBeCalledWith(editPayload);
+		expect(mockResponse.status).toBeCalledWith(HttpStatusCode.OK);
+		expect(mockResponse.json).toBeCalledTimes(1);
+		expect(mockNext).toBeCalledTimes(0);
+	});
+
+	it('Add email to test user: should call nextFunction when service throw an error', async () => {
+		const err = new CustomErrorImp('test error', HttpStatusCode.BAD_REQUEST);
+		UserManagerServiceImp.addEmailToTestUser = vi.fn().mockImplementation(() => {
+			throw err;
+		});
+		mockRequest.body = editPayload;
+		await UserManagerController.addEmailToTestUser(mockRequest as ExtendedRequest, mockResponse as Response, mockNext as NextFunction);
+
+		expect(UserManagerServiceImp.addEmailToTestUser).toBeCalledTimes(1);
+		expect(UserManagerServiceImp.addEmailToTestUser).toBeCalledWith(editPayload);
+		expect(mockResponse.status).toBeCalledTimes(0);
+		expect(mockResponse.json).toBeCalledTimes(0);
+		expect(mockNext).toBeCalledTimes(1);
+		expect(mockNext).toBeCalledWith(err);
+	});
 });

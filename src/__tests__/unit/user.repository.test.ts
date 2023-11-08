@@ -85,6 +85,17 @@ describe('User route repository tests', () => {
 		expect(UserModel.findOneAndUpdate).toBeCalledWith({ username: userData.username }, { $set: { password: userData.password } });
 	});
 
+	it('Add email to test user: should add new email and change status', async () => {
+		UserModel.findOneAndUpdate = vi.fn().mockImplementation(async () => userData);
+		await UserMongoRepository.addEmailToTestUser(userData.username, userData.email, Status.VALID_ACC);
+
+		expect(UserModel.findOneAndUpdate).toBeCalledTimes(1);
+		expect(UserModel.findOneAndUpdate).toBeCalledWith(
+			{ username: userData.username },
+			{ $set: { email: userData.email, status: Status.VALID_ACC } }
+		);
+	});
+
 	it('Handle repository error: should throw a custom erro if its a duplicate mongo error', () => {
 		try {
 			const err = new mongo.MongoError('{ username: "test" }');
