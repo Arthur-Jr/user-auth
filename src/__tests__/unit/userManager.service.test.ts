@@ -22,6 +22,7 @@ describe('User manager service tests:', () => {
 	const userTestData = { username: 'test', email: 'test@email.com', password: 'cryptedPassword', status: Status.TEST_ACC };
 	let editPayload = { username: 'test', password: 'pass', email: '', newPassword: '' };
 	const testError = new Error('test Error');
+	const cryptedPassword = 'cryptPass';
 
 	beforeEach(() => {
 		customError = new CustomErrorImp();
@@ -57,6 +58,7 @@ describe('User manager service tests:', () => {
 		mockValidator.validatePayload = vi.fn();
 		UserMongoRepository.findUserByUsername = vi.fn().mockImplementation(() => userData);
 		mockCrypt.checkPassword = vi.fn();
+		mockCrypt.cryptPassword = vi.fn().mockImplementation(() => cryptedPassword);
 		UserMongoRepository.editEmail = vi.fn();
 		UserMongoRepository.editPassword = vi.fn();
 		editPayload.newPassword= 'newPass';
@@ -69,7 +71,7 @@ describe('User manager service tests:', () => {
 		expect(mockCrypt.checkPassword).toBeCalledTimes(1);
 		expect(mockCrypt.checkPassword).toBeCalledWith(editPayload.password, userData.password, customError);
 		expect(UserMongoRepository.editPassword).toBeCalledTimes(1);
-		expect(UserMongoRepository.editPassword).toBeCalledWith(editPayload.username, editPayload.newPassword);
+		expect(UserMongoRepository.editPassword).toBeCalledWith(editPayload.username, cryptedPassword);
 		expect(UserMongoRepository.editEmail).toBeCalledTimes(0);
 	});
 
@@ -77,6 +79,7 @@ describe('User manager service tests:', () => {
 		mockValidator.validatePayload = vi.fn();
 		UserMongoRepository.findUserByUsername = vi.fn().mockImplementation(() => userData);
 		mockCrypt.checkPassword = vi.fn();
+		mockCrypt.cryptPassword = vi.fn().mockImplementation(() => cryptedPassword);
 		UserMongoRepository.editEmail = vi.fn();
 		UserMongoRepository.editPassword = vi.fn();
 		editPayload.email = userData.email;
@@ -90,9 +93,32 @@ describe('User manager service tests:', () => {
 		expect(mockCrypt.checkPassword).toBeCalledTimes(1);
 		expect(mockCrypt.checkPassword).toBeCalledWith(editPayload.password, userData.password, customError);
 		expect(UserMongoRepository.editPassword).toBeCalledTimes(1);
-		expect(UserMongoRepository.editPassword).toBeCalledWith(editPayload.username, editPayload.newPassword);
+		expect(UserMongoRepository.editPassword).toBeCalledWith(editPayload.username, cryptedPassword);
 		expect(UserMongoRepository.editEmail).toBeCalledTimes(1);
 		expect(UserMongoRepository.editEmail).toBeCalledWith(editPayload.username, editPayload.email);
+	});
+
+	it('Edit user: should not edit user data if its a test acc', async () => {
+		try {
+			mockValidator.validatePayload = vi.fn();
+			UserMongoRepository.findUserByUsername = vi.fn().mockImplementation(() => userTestData);
+			mockCrypt.checkPassword = vi.fn();
+	
+			await service.editUser(editPayload);
+
+		} catch(err) {
+			if (err instanceof CustomErrorImp) {
+				expect(mockValidator.validatePayload).toBeCalledTimes(1);
+				expect(mockValidator.validatePayload).toBeCalledWith(editPayload);
+				expect(UserMongoRepository.findUserByUsername).toBeCalledTimes(1);
+				expect(UserMongoRepository.findUserByUsername).toBeCalledWith(editPayload.username);
+				expect(mockCrypt.checkPassword).toBeCalledTimes(1);
+				expect(mockCrypt.checkPassword).toBeCalledWith(editPayload.password, userData.password, customError);
+				expect(UserMongoRepository.editPassword).toBeCalledTimes(0);
+				expect(UserMongoRepository.editEmail).toBeCalledTimes(0);
+			}
+		}
+
 	});
 
 	it('Edit user: should throw an Error if payload is invalid', async () => {
@@ -218,7 +244,7 @@ describe('User manager service tests:', () => {
 
 			if(err instanceof CustomErrorImp) {
 				expect(err.getStatus()).toBe(HttpStatusCode.BAD_REQUEST);
-				expect(err.getMessage()).toBe(ErrorMessages.INVALID_ACC_TYPE);
+				expect(err.getMessage()).toBe(`${ErrorMessages.INVALID_EMAIL} or ${ErrorMessages.INVALID_ACC_TYPE}`);
 			}
 		}
 	});

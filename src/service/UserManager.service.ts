@@ -30,14 +30,21 @@ export class UserManagerServiceImp extends UserService implements UserManagerSer
 	public async editUser(userPayload: EditUserPayload): Promise<void> {
 		try {
 			this.payloadValidator.validatePayload(userPayload);
-			await this.checkUser(userPayload.username, userPayload.password);
+			const user = await this.checkUser(userPayload.username, userPayload.password);
 
-			if(userPayload.email) {
+			if (user.status !== Status.VALID_ACC) {
+				this.customError.setMessage(ErrorMessages.INVALID_ACC_TYPE);
+				this.customError.setStatus(HttpStatusCode.BAD_REQUEST);
+				throw this.customError;
+			}
+
+			if(userPayload.email && user.status) {
 				await this.userRepository.editEmail(userPayload.username, userPayload.email);
 			}
 
 			if(userPayload.newPassword) {
-				await this.userRepository.editPassword(userPayload.username, userPayload.newPassword);
+				const cryptPassword = await this.crypt.cryptPassword(userPayload.newPassword);
+				await this.userRepository.editPassword(userPayload.username, cryptPassword);
 			}
 
 		} catch(err) {
@@ -55,7 +62,7 @@ export class UserManagerServiceImp extends UserService implements UserManagerSer
 			if(userPayload.email && user.status === Status.TEST_ACC) {
 				await this.userRepository.addEmailToTestUser(userPayload.username, userPayload.email, Status.VALID_ACC);
 			} else {
-				this.customError.setMessage(ErrorMessages.INVALID_ACC_TYPE);
+				this.customError.setMessage(`${ErrorMessages.INVALID_EMAIL} or ${ErrorMessages.INVALID_ACC_TYPE}`);
 				this.customError.setStatus(HttpStatusCode.BAD_REQUEST);
 				throw this.customError;
 			}
@@ -95,7 +102,7 @@ export class UserManagerServiceImp extends UserService implements UserManagerSer
 			throw this.customError;
 		}
 
-		this.crypt.checkPassword(password, user.password, this.customError); /* Password check */
+		await this.crypt.checkPassword(password, user.password, this.customError); /* Password check */
 
 		return user;
 	}
