@@ -69,6 +69,23 @@ export class UserManagerServiceImp extends UserService implements UserManagerSer
 		}
 	}
 
+	public async getUserByUsername(username: string): Promise<{ username: string, email: string | undefined, status: number }> | never {
+		try {
+			const user = await this.userRepository.findUserByUsername(username);
+	
+			if (!user) {
+				this.customError.setMessage(ErrorMessages.USER_NOT_FOUND);
+				this.customError.setStatus(HttpStatusCode.NOT_FOUND);
+				throw this.customError;
+			}
+
+			return { username: user.username, email: user.email, status: user.status };
+		}catch(err) {
+			this.userRepository.handleRepositoryError(err, this.customError);
+			throw this.customError;	
+		}
+	}
+
 	private async checkUser(username: string, password: string): Promise<User> | never {
 		const user = await this.userRepository.findUserByUsername(username);
 

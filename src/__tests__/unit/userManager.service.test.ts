@@ -280,4 +280,57 @@ describe('User manager service tests:', () => {
 			}
 		}
 	});
+
+	it('Get user by username: should return user info', async () => {
+		UserMongoRepository.findUserByUsername = vi.fn().mockImplementation(() => userData);
+		const user = await service.getUserByUsername(userData.username);
+		
+		expect(user.username).toBe(userData.username);
+		expect(user.status).toBe(userData.status);
+		expect(user.email).toBe(userData.email);
+		expect(UserMongoRepository.findUserByUsername).toBeCalledTimes(1);
+		expect(UserMongoRepository.findUserByUsername).toBeCalledWith(userData.username);
+	});
+
+	it('Get user by username: should throw a custom Error if user is not found.', async () => {
+		try {
+			UserMongoRepository.findUserByUsername = vi.fn().mockImplementation(() => null);
+			UserMongoRepository.handleRepositoryError = vi.fn();
+
+			expect(async () => {
+				await service.getUserByUsername(userData.username);
+			});
+		} catch(err) {
+			if (err instanceof CustomErrorImp) {
+				expect(UserMongoRepository.findUserByUsername).toBeCalledTimes(1);
+				expect(UserMongoRepository.handleRepositoryError).toBeCalledTimes(1);
+				expect(err.getStatus()).toBe(HttpStatusCode.NOT_FOUND);
+				expect(err.getMessage()).toBe(ErrorMessages.USER_NOT_FOUND);
+			}
+		}
+	});
+
+	it('Get user by username: should throw a custom Error if repository throw error.', async () => {
+		try {
+			UserMongoRepository.findUserByUsername = vi.fn().mockImplementation(() => {
+				throw testError;
+			});
+
+			UserMongoRepository.handleRepositoryError = vi.fn().mockImplementation(() => {
+				customError.setMessage('Repository Error');
+				customError.setStatus(HttpStatusCode.CONFLICT);
+				throw customError;
+			});
+
+			await service.getUserByUsername(userData.username);
+		} catch(err) {
+			if (err instanceof CustomErrorImp) {
+				expect(UserMongoRepository.findUserByUsername).toBeCalledTimes(1);
+				expect(UserMongoRepository.handleRepositoryError).toBeCalledTimes(1);
+				expect(UserMongoRepository.handleRepositoryError).toBeCalledWith(testError, customError);
+				expect(err.getStatus()).toBe(HttpStatusCode.CONFLICT);
+				expect(err.getMessage()).toBe('Repository Error');
+			}
+		}
+	});
 });
