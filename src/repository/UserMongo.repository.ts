@@ -35,6 +35,10 @@ class UserMongoRepository implements UserRepository {
 		await this.model.findOneAndUpdate({ username }, { $set: { password } });
 	}
 
+	public async addEmailToTestUser(username: string, email: string, status: number): Promise<void> {
+		await this.model.findOneAndUpdate({ username }, { $set: { email, status } });
+	}
+
 	public handleRepositoryError(err: unknown, customError: CustomError): void {
 		const DUPLICATE_FIELD_ERROR_CODE = 11000;
 
