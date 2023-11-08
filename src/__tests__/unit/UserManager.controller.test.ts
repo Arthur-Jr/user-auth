@@ -7,6 +7,7 @@ import UserManagerServiceImp from '../../service/UserManager.service';
 import HttpStatusCode from '../../enums/HttpStatusCode';
 import CustomErrorImp from '../../errors/CustomErrorImp';
 import ExtendedRequest from '../../interfaces/ExtendedRequest';
+import Status from '../../enums/Status';
 
 describe('User manager controller tests:', () => {
 	const mockRequest = { body: {} };
@@ -16,6 +17,7 @@ describe('User manager controller tests:', () => {
 	} as Partial<Response>;
 	const mockNext = vi.fn();
 	const editPayload = { username: 'test', password: 'pass', email: 'email@eamil.com', newPassword: 'password' };
+	const userData = { username: 'test', email: 'test@email.com', password: 'cryptedPassword', status: Status.VALID_ACC };
 
 	afterEach(() => {
 		vi.clearAllMocks();
@@ -71,6 +73,34 @@ describe('User manager controller tests:', () => {
 
 		expect(UserManagerServiceImp.addEmailToTestUser).toBeCalledTimes(1);
 		expect(UserManagerServiceImp.addEmailToTestUser).toBeCalledWith(editPayload);
+		expect(mockResponse.status).toBeCalledTimes(0);
+		expect(mockResponse.json).toBeCalledTimes(0);
+		expect(mockNext).toBeCalledTimes(1);
+		expect(mockNext).toBeCalledWith(err);
+	});
+
+	it('Get user by username: should return status 200 with a new token if email was added', async () => {
+		UserManagerServiceImp.getUserByUsername = vi.fn().mockImplementation(() => userData);
+		mockRequest.body = editPayload;
+		await UserManagerController.getUserByUsername(mockRequest as ExtendedRequest, mockResponse as Response, mockNext as NextFunction);
+
+		expect(UserManagerServiceImp.getUserByUsername).toBeCalledTimes(1);
+		expect(UserManagerServiceImp.getUserByUsername).toBeCalledWith(editPayload.username);
+		expect(mockResponse.status).toBeCalledWith(HttpStatusCode.OK);
+		expect(mockResponse.json).toBeCalledTimes(1);
+		expect(mockNext).toBeCalledTimes(0);
+	});
+
+	it('Get user by username: should call nextFunction when service throw an error', async () => {
+		const err = new CustomErrorImp('test error', HttpStatusCode.BAD_REQUEST);
+		UserManagerServiceImp.getUserByUsername = vi.fn().mockImplementation(() => {
+			throw err;
+		});
+		mockRequest.body = editPayload;
+		await UserManagerController.getUserByUsername(mockRequest as ExtendedRequest, mockResponse as Response, mockNext as NextFunction);
+
+		expect(UserManagerServiceImp.getUserByUsername).toBeCalledTimes(1);
+		expect(UserManagerServiceImp.getUserByUsername).toBeCalledWith(editPayload.username);
 		expect(mockResponse.status).toBeCalledTimes(0);
 		expect(mockResponse.json).toBeCalledTimes(0);
 		expect(mockNext).toBeCalledTimes(1);
