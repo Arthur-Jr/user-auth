@@ -10,6 +10,7 @@ import BCryptPassword from '../../crypt/BCryptPassword';
 import UserManagerService from '../../interfaces/UserManegerService';
 import { UserManagerServiceImp } from '../../service/UserManager.service';
 import ErrorMessages from '../../enums/ErrorMessages';
+import Status from '../../enums/Status';
 
 describe('User manager service tests:', () => {
 	const mockValidator = new ZodPayloadValidator(editUserSchema);
@@ -17,7 +18,8 @@ describe('User manager service tests:', () => {
 	const mockCrypt = new BCryptPassword();
 	let customError = new CustomErrorImp();
 	let service: UserManagerService;
-	const userData = { username: 'test', email: 'test@email.com', password: 'cryptedPassword' };
+	const userData = { username: 'test', email: 'test@email.com', password: 'cryptedPassword', status: Status.VALID_ACC };
+	const userTestData = { username: 'test', email: 'test@email.com', password: 'cryptedPassword', status: Status.TEST_ACC };
 	let editPayload = { username: 'test', password: 'pass', email: '', newPassword: '' };
 	const testError = new Error('test Error');
 
@@ -171,6 +173,110 @@ describe('User manager service tests:', () => {
 				expect(mockCrypt.checkPassword).toBeCalledTimes(0);
 				expect(err.getStatus()).toBe(HttpStatusCode.NOT_FOUND);
 				expect(err.getMessage()).toBe(ErrorMessages.USER_NOT_FOUND);
+			}
+		}
+	});
+
+	it('Add email to test user: should add email if its a test acc', async () => {
+		editPayload.email = userTestData.email;
+		mockValidator.validatePayload = vi.fn();
+		UserMongoRepository.findUserByUsername = vi.fn().mockImplementation(() => userTestData);
+		mockCrypt.checkPassword = vi.fn();
+		UserMongoRepository.addEmailToTestUser = vi.fn();
+		mockAuth.getToken = vi.fn().mockImplementation(() => 'token');
+		const token = await service.addEmailToTestUser(editPayload);
+
+		expect(token).toStrictEqual({ token: 'token' });
+		expect(mockValidator.validatePayload).toBeCalledTimes(1);
+		expect(mockValidator.validatePayload).toBeCalledWith(editPayload);
+		expect(UserMongoRepository.findUserByUsername).toBeCalledTimes(1);
+		expect(UserMongoRepository.findUserByUsername).toBeCalledWith(editPayload.username);
+		expect(mockCrypt.checkPassword).toBeCalledTimes(1);
+		expect(mockCrypt.checkPassword).toBeCalledWith(editPayload.password, userData.password, customError);
+		expect(UserMongoRepository.addEmailToTestUser).toBeCalledTimes(1);
+		expect(UserMongoRepository.addEmailToTestUser).toBeCalledWith(editPayload.username, editPayload.email, Status.VALID_ACC);
+	});
+
+	it('Add email to test user: should not add email if its a valid acc', async () => {
+		try {
+			editPayload.email = userTestData.email;
+			mockValidator.validatePayload = vi.fn();
+			UserMongoRepository.findUserByUsername = vi.fn().mockImplementation(() => userData);
+			mockCrypt.checkPassword = vi.fn();
+			UserMongoRepository.addEmailToTestUser = vi.fn();
+			mockAuth.getToken = vi.fn().mockImplementation(() => 'token');
+			await service.addEmailToTestUser(editPayload);
+			
+		} catch(err) {
+			expect(mockValidator.validatePayload).toBeCalledTimes(1);
+			expect(mockValidator.validatePayload).toBeCalledWith(editPayload);
+			expect(UserMongoRepository.findUserByUsername).toBeCalledTimes(1);
+			expect(UserMongoRepository.findUserByUsername).toBeCalledWith(editPayload.username);
+			expect(mockCrypt.checkPassword).toBeCalledTimes(1);
+			expect(mockCrypt.checkPassword).toBeCalledWith(editPayload.password, userData.password, customError);
+			expect(UserMongoRepository.addEmailToTestUser).toBeCalledTimes(0);
+
+			if(err instanceof CustomErrorImp) {
+				expect(err.getStatus()).toBe(HttpStatusCode.BAD_REQUEST);
+				expect(err.getMessage()).toBe(ErrorMessages.INVALID_ACC_TYPE);
+			}
+		}
+	});
+
+	it('Add email to test user: should throw an Error if payload is invalid', async () => {
+		try {
+			mockValidator.validatePayload = vi.fn().mockImplementation(() => {
+				throw testError;
+			});
+
+			mockValidator.handleValidateError = vi.fn().mockImplementation(() => {
+				customError.setMessage('Validate Error');
+				customError.setStatus(HttpStatusCode.BAD_REQUEST);
+				throw customError;
+			});
+
+			await service.addEmailToTestUser(editPayload);
+		} catch(err) {
+			if (err instanceof CustomErrorImp) {
+				expect(mockValidator.validatePayload).toBeCalledTimes(1);
+				expect(UserMongoRepository.findUserByUsername).toBeCalledTimes(0);
+				expect(UserMongoRepository.addEmailToTestUser).toBeCalledTimes(0);
+				expect(mockValidator.handleValidateError).toBeCalledTimes(1);
+				expect(mockValidator.handleValidateError).toBeCalledWith(testError, customError);
+				expect(err.getStatus()).toBe(HttpStatusCode.BAD_REQUEST);
+				expect(err.getMessage()).toBe('Validate Error');
+			}
+		}
+	});
+
+	it('Add email to test user: should throw a custom Error if repository throw error.', async () => {
+		try {
+			editPayload.email = userData.email;
+			mockValidator.validatePayload = vi.fn();
+			mockValidator.handleValidateError = vi.fn();
+			UserMongoRepository.findUserByUsername = vi.fn().mockImplementation(() => userTestData);
+			mockCrypt.checkPassword = vi.fn();
+			UserMongoRepository.addEmailToTestUser = vi.fn().mockImplementation(() => {
+				throw testError;
+			});
+
+			UserMongoRepository.handleRepositoryError = vi.fn().mockImplementation(() => {
+				customError.setMessage('Repository Error');
+				customError.setStatus(HttpStatusCode.CONFLICT);
+				throw customError;
+			});
+
+			await service.addEmailToTestUser(editPayload);
+		} catch(err) {
+			if (err instanceof CustomErrorImp) {
+				expect(mockValidator.validatePayload).toBeCalledTimes(1);
+				expect(mockValidator.handleValidateError).toBeCalledTimes(1);
+				expect(UserMongoRepository.findUserByUsername).toBeCalledTimes(1);
+				expect(UserMongoRepository.addEmailToTestUser).toBeCalledTimes(1);
+				expect(UserMongoRepository.handleRepositoryError).toBeCalledTimes(1);
+				expect(UserMongoRepository.handleRepositoryError).toBeCalledWith(testError, customError);
+				expect(err.getStatus()).toBe(HttpStatusCode.CONFLICT);
+				expect(err.getMessage()).toBe('Repository Error');
 			}
 		}
 	});
