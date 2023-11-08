@@ -7,6 +7,8 @@ interface UserRepository {
   findUserByUsername(username: string): Promise<User | null>,
   findUserByEmail(email: string): Promise<User | null>,
   handleRepositoryError(err: unknown, customError: CustomError): void,
+  editEmail(username: string, email: string): Promise<void>,
+  editPassword(username: string, password: string): Promise<void>,
 }
 
 export default UserRepository;
