@@ -39,6 +39,10 @@ class UserMongoRepository implements UserRepository {
 		await this.model.findOneAndUpdate({ username }, { $set: { email, status } });
 	}
 
+	public async deleteUser(username: string): Promise<void> {
+		await this.model.findOneAndDelete({ username });
+	}
+
 	public handleRepositoryError(err: unknown, customError: CustomError): void {
 		const DUPLICATE_FIELD_ERROR_CODE = 11000;
 
