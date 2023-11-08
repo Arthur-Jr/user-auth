@@ -14,5 +14,6 @@ userRouter.use((req, res, next) => AuthMiddeware.handleAuthMiddleware(req, res, 
 userRouter.put('/', (req, res, next) => UserManagerController.editUser(req, res, next));
 userRouter.put('/test-email', (req, res, next) => UserManagerController.addEmailToTestUser(req, res, next));
 userRouter.get('/', (req, res, next) => UserManagerController.getUserByUsername(req, res, next));
+userRouter.delete('/',(req, res, next) => UserManagerController.deleteUser(req, res, next));
 
 export default userRouter;
