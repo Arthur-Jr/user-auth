@@ -96,6 +96,14 @@ describe('User route repository tests', () => {
 		);
 	});
 
+	it('Delete user: should delete user', async () => {
+		UserModel.findOneAndDelete= vi.fn().mockImplementation(async () => null);
+		await UserMongoRepository.deleteUser(userData.username);
+
+		expect(UserModel.findOneAndDelete).toBeCalledTimes(1);
+		expect(UserModel.findOneAndDelete).toBeCalledWith({ username: userData.username });
+	});
+
 	it('Handle repository error: should throw a custom erro if its a duplicate mongo error', () => {
 		try {
 			const err = new mongo.MongoError('{ username: "test" }');
