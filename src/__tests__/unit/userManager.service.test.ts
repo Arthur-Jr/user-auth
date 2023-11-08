@@ -359,4 +359,70 @@ describe('User manager service tests:', () => {
 			}
 		}
 	});
+
+	it('Delete user should delete user', async () => {
+		mockValidator.validatePayload = vi.fn();
+		mockValidator.handleValidateError = vi.fn();
+		UserMongoRepository.findUserByUsername = vi.fn().mockImplementation(() => userData);
+		mockCrypt.checkPassword = vi.fn();
+		UserMongoRepository.deleteUser = vi.fn().mockImplementation(() => null);
+		await service.deleteUser(editPayload);
+		
+		expect(UserMongoRepository.deleteUser).toBeCalledTimes(1);
+		expect(UserMongoRepository.deleteUser).toBeCalledWith(editPayload.username);
+	});
+
+	it('Delete user: should throw an Error if payload is invalid', async () => {
+		try {
+			mockValidator.validatePayload = vi.fn().mockImplementation(() => {
+				throw testError;
+			});
+
+			mockValidator.handleValidateError = vi.fn().mockImplementation(() => {
+				customError.setMessage('Validate Error');
+				customError.setStatus(HttpStatusCode.BAD_REQUEST);
+				throw customError;
+			});
+
+			await service.deleteUser(editPayload);
+		} catch(err) {
+			if (err instanceof CustomErrorImp) {
+				expect(mockValidator.validatePayload).toBeCalledTimes(1);
+				expect(UserMongoRepository.findUserByUsername).toBeCalledTimes(0);
+				expect(UserMongoRepository.addEmailToTestUser).toBeCalledTimes(0);
+				expect(mockValidator.handleValidateError).toBeCalledTimes(1);
+				expect(mockValidator.handleValidateError).toBeCalledWith(testError, customError);
+				expect(err.getStatus()).toBe(HttpStatusCode.BAD_REQUEST);
+				expect(err.getMessage()).toBe('Validate Error');
+			}
+		}
+	});
+
+	it('Delete user: should throw a custom Error if repository throw error.', async () => {
+		try {
+			mockValidator.validatePayload = vi.fn();
+			mockValidator.handleValidateError = vi.fn();
+			UserMongoRepository.findUserByUsername = vi.fn().mockImplementation(() => userData);
+			mockCrypt.checkPassword = vi.fn();
+			UserMongoRepository.deleteUser = vi.fn().mockImplementation(() => {
+				throw testError;
+			});
+
+			UserMongoRepository.handleRepositoryError = vi.fn().mockImplementation(() => {
+				customError.setMessage('Repository Error');
+				customError.setStatus(HttpStatusCode.CONFLICT);
+				throw customError;
+			});
+
+			await service.deleteUser(editPayload);
+		} catch(err) {
+			if (err instanceof CustomErrorImp) {
+				expect(UserMongoRepository.findUserByUsername).toBeCalledTimes(1);
+				expect(UserMongoRepository.handleRepositoryError).toBeCalledTimes(1);
+				expect(UserMongoRepository.handleRepositoryError).toBeCalledWith(testError, customError);
+				expect(err.getStatus()).toBe(HttpStatusCode.CONFLICT);
+				expect(err.getMessage()).toBe('Repository Error');
+			}
+		}
+	});
 });

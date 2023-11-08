@@ -93,6 +93,18 @@ export class UserManagerServiceImp extends UserService implements UserManagerSer
 		}
 	}
 
+	public async deleteUser(userPayload: EditUserPayload): Promise<void> {
+		try {
+			this.payloadValidator.validatePayload(userPayload);
+			await this.checkUser(userPayload.username, userPayload.password);
+			await this.userRepository.deleteUser(userPayload.username);
+		} catch(err) {
+			this.payloadValidator.handleValidateError(err, this.customError);
+			this.userRepository.handleRepositoryError(err, this.customError);
+			throw this.customError;	
+		}
+	}
+
 	private async checkUser(username: string, password: string): Promise<User> | never {
 		const user = await this.userRepository.findUserByUsername(username);
 
