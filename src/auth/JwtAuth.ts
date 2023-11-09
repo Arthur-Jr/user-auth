@@ -6,7 +6,7 @@ class JwtAuth implements Auth {
 	private readonly secret: string = process.env.JWT_SECRET_KEY || 'testKey';
 
 	getToken(userData: { username: string; status: number; }): string {
-		return jwt.sign({ data: userData }, this.secret, { algorithm: 'HS256', expiresIn: '24h' });
+		return jwt.sign({ data: userData }, this.secret, { algorithm: 'HS256', expiresIn: '7d' });
 	}
 
 	decodeToken(token: string): JwtPayload | string {
