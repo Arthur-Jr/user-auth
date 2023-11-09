@@ -2,6 +2,7 @@ import JwtAuth from '../auth/JwtAuth';
 import BCryptPassword from '../crypt/BCryptPassword';
 import ErrorMessages from '../enums/ErrorMessages';
 import HttpStatusCode from '../enums/HttpStatusCode';
+import Status from '../enums/Status';
 import CustomErrorImp from '../errors/CustomErrorImp';
 import Auth from '../interfaces/Auth';
 import CustomError from '../interfaces/CustomError';
@@ -29,8 +30,12 @@ export class LoginServiceImp extends UserService implements LoginService {
 	public async login(userData: UserPayload): Promise<{ token: string; }> {
 		try {
 			this.payloadValidator.validatePayload(userData);
-			const { username, status, password } = await this.getUserByUsernameOrEmail(userData);
+			const { username, status, password, createdAt } = await this.getUserByUsernameOrEmail(userData);
 			await this.crypt.checkPassword(userData.password, password, this.customError);
+
+			if (status === Status.TEST_ACC) {
+				await this.handleTestAccDateLimit(createdAt, username);
+			}
 
 			const token = this.auth.getToken({ username, status });
 			return { token };
@@ -59,6 +64,20 @@ export class LoginServiceImp extends UserService implements LoginService {
 		}
 
 		return user;
+	}
+
+	private async handleTestAccDateLimit(createdAt: Date, username: string): Promise<void> {
+		const THIRTY = 30;
+		const dateNow = new Date();
+		const thyrtyDaysAfterAccRegister = new Date(createdAt.setDate(createdAt.getDate() + THIRTY));
+
+		if (thyrtyDaysAfterAccRegister < dateNow) {
+			await this.userRepository.deleteUser(username);
+
+			this.customError.setMessage(ErrorMessages.TEST_ACC_DELETED);
+			this.customError.setStatus(HttpStatusCode.UNAUTHORIZED);
+			throw this.customError;
+		}
 	}
 }
 

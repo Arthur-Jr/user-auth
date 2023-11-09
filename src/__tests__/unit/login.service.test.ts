@@ -21,6 +21,9 @@ describe('Login service unit tests', () => {
 	let service: LoginService;
 	let userData: UserPayload;
 	const foundedUser = { _id: 1, username: 'test', email: 'email@email.com', password: 'testPassCrypt', status: Status.VALID_ACC };
+	const foundedTestUser = {
+		_id: 1, username: 'test', email: 'email@email.com', password: 'testPassCrypt', status: Status.TEST_ACC, createdAt: new Date()
+	};
 	const testError = new Error('test Error');
 
 	beforeEach(() => {
@@ -38,6 +41,7 @@ describe('Login service unit tests', () => {
 
 		mockValidator.validatePayload = vi.fn();
 		UserMongoRepository.findUserByUsername = vi.fn().mockImplementation(() => foundedUser);
+		UserMongoRepository.deleteUser = vi.fn();
 		mockCrypt.checkPassword = vi.fn();
 		mockAuth.getToken = vi.fn().mockImplementation((_x) => expectedValue.token);
 		const result = await service.login(userData);
@@ -48,6 +52,7 @@ describe('Login service unit tests', () => {
 		expect(UserMongoRepository.findUserByUsername).toBeCalledWith(userData.username);
 		expect(mockCrypt.checkPassword).toBeCalledTimes(1);
 		expect(mockCrypt.checkPassword).toBeCalledWith(userData.password, foundedUser.password, customError);
+		expect(UserMongoRepository.deleteUser).toBeCalledTimes(0);
 		expect(mockAuth.getToken).toBeCalledTimes(1);
 		expect(mockAuth.getToken).toBeCalledWith({ username: foundedUser.username, status: foundedUser.status });
 		expect(result).toStrictEqual(expectedValue);
@@ -59,6 +64,7 @@ describe('Login service unit tests', () => {
 
 		mockValidator.validatePayload = vi.fn();
 		UserMongoRepository.findUserByEmail = vi.fn().mockImplementation(() => foundedUser);
+		UserMongoRepository.deleteUser = vi.fn();
 		mockCrypt.checkPassword = vi.fn();
 		mockAuth.getToken = vi.fn().mockImplementation((_x) => expectedValue.token);
 		const result = await service.login(userData);
@@ -69,9 +75,65 @@ describe('Login service unit tests', () => {
 		expect(UserMongoRepository.findUserByEmail).toBeCalledWith(userData.email);
 		expect(mockCrypt.checkPassword).toBeCalledTimes(1);
 		expect(mockCrypt.checkPassword).toBeCalledWith(userData.password, foundedUser.password, customError);
+		expect(UserMongoRepository.deleteUser).toBeCalledTimes(0);
 		expect(mockAuth.getToken).toBeCalledTimes(1);
 		expect(mockAuth.getToken).toBeCalledWith({ username: foundedUser.username, status: foundedUser.status });
 		expect(result).toStrictEqual(expectedValue);
+	});
+
+	it('Login method: should return a token if test acc is still valid', async () => {
+		userData = { email: 'test', password: 'testPass' };
+		const expectedValue = { token: 'test' };
+
+		mockValidator.validatePayload = vi.fn();
+		UserMongoRepository.findUserByEmail = vi.fn().mockImplementation(() => foundedTestUser);
+		mockCrypt.checkPassword = vi.fn();
+		UserMongoRepository.deleteUser = vi.fn();
+		mockAuth.getToken = vi.fn().mockImplementation((_x) => expectedValue.token);
+
+		const result = await service.login(userData);
+
+		expect(mockValidator.validatePayload).toBeCalledTimes(1);
+		expect(mockValidator.validatePayload).toBeCalledWith(userData);
+		expect(UserMongoRepository.findUserByEmail).toBeCalledTimes(1);
+		expect(UserMongoRepository.findUserByEmail).toBeCalledWith(userData.email);
+		expect(mockCrypt.checkPassword).toBeCalledTimes(1);
+		expect(mockCrypt.checkPassword).toBeCalledWith(userData.password, foundedUser.password, customError);
+		expect(UserMongoRepository.deleteUser).toBeCalledTimes(0);
+		expect(mockAuth.getToken).toBeCalledTimes(1);
+		expect(mockAuth.getToken).toBeCalledWith({ username: foundedTestUser.username, status: foundedTestUser.status });
+		expect(result).toStrictEqual(expectedValue);
+	});
+
+	it('Login method: should delete user and throw an error if test acc is not valid anymore', async () => {
+		try {
+			userData = { email: 'test', password: 'testPass' };
+			foundedTestUser.createdAt = new Date(foundedTestUser.createdAt.setDate(foundedTestUser.createdAt.getDate()) - 30);
+			const expectedValue = { token: 'test' };
+	
+			mockValidator.validatePayload = vi.fn();
+			UserMongoRepository.findUserByEmail = vi.fn().mockImplementation(() => foundedTestUser);
+			mockCrypt.checkPassword = vi.fn();
+			UserMongoRepository.deleteUser = vi.fn();
+			mockAuth.getToken = vi.fn().mockImplementation((_x) => expectedValue.token);
+	
+			await service.login(userData);
+
+		} catch(err) {
+			expect(mockValidator.validatePayload).toBeCalledTimes(1);
+			expect(mockValidator.validatePayload).toBeCalledWith(userData);
+			expect(UserMongoRepository.findUserByEmail).toBeCalledTimes(1);
+			expect(UserMongoRepository.findUserByEmail).toBeCalledWith(userData.email);
+			expect(mockCrypt.checkPassword).toBeCalledTimes(1);
+			expect(mockCrypt.checkPassword).toBeCalledWith(userData.password, foundedUser.password, customError);
+			expect(UserMongoRepository.deleteUser).toBeCalledTimes(1);
+			expect(mockAuth.getToken).toBeCalledTimes(1);
+			expect(mockAuth.getToken).toBeCalledWith({ username: foundedTestUser.username, status: foundedTestUser.status });
+			if (err instanceof CustomErrorImp) {
+				expect(err.getStatus()).toBe(HttpStatusCode.UNAUTHORIZED);
+				expect(err.getMessage()).toBe(ErrorMessages.TEST_ACC_DELETED);
+			}
+		}
 	});
 
 	it('Login method: should throw an error if user is not founded', async () => {
