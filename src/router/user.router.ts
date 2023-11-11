@@ -9,7 +9,7 @@ const userRouter = express.Router();
 
 userRouter.post('/register', (req, res, next) => RegisterController.registerNewUser(req, res, next));
 userRouter.post('/login', (req, res, next) => LoginController.login(req, res, next));
-userRouter.post('/forget', (req, res, next) => UserManagerController.forgetPassword(req, res, next));
+userRouter.post('/forgot-password', (req, res, next) => UserManagerController.forgetPassword(req, res, next));
 
 userRouter.use((req, res, next) => AuthMiddeware.handleAuthMiddleware(req, res, next));
 userRouter.put('/', (req, res, next) => UserManagerController.editUser(req, res, next));

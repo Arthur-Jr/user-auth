@@ -12,6 +12,7 @@ enum ErrorMessages {
   INVALID_EMAIL = 'Invalid email',
   TEST_ACC_DELETED = 'Test account already deleted!',
   SOMETHING_WENT_WRONG = 'Something went wrong!',
+  UNDELIVERABLE_EMAIL = 'Undeliverable email!',
 }
 
 export default ErrorMessages;
