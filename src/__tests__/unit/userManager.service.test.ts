@@ -11,11 +11,13 @@ import UserManagerService from '../../interfaces/UserManegerService';
 import { UserManagerServiceImp } from '../../service/UserManager.service';
 import ErrorMessages from '../../enums/ErrorMessages';
 import Status from '../../enums/Status';
+import SendGridMail from '../../mail/SendGridMail';
 
 describe('User manager service tests:', () => {
 	const mockValidator = new ZodPayloadValidator(editUserSchema);
 	const mockAuth = new JwtAuth();
 	const mockCrypt = new BCryptPassword();
+	const mockMail = new SendGridMail();
 	let customError = new CustomErrorImp();
 	let service: UserManagerService;
 	const userData = { username: 'test', email: 'test@email.com', password: 'cryptedPassword', status: Status.VALID_ACC };
@@ -26,7 +28,7 @@ describe('User manager service tests:', () => {
 
 	beforeEach(() => {
 		customError = new CustomErrorImp();
-		service = new UserManagerServiceImp(UserMongoRepository, mockValidator, customError, mockAuth, mockCrypt);
+		service = new UserManagerServiceImp(UserMongoRepository, mockValidator, customError, mockAuth, mockCrypt, mockMail);
 		editPayload = { username: 'test', password: 'testPass', email: '', newPassword: '' };
 	});
 
@@ -421,6 +423,74 @@ describe('User manager service tests:', () => {
 				expect(UserMongoRepository.handleRepositoryError).toBeCalledTimes(1);
 				expect(UserMongoRepository.handleRepositoryError).toBeCalledWith(testError, customError);
 				expect(err.getStatus()).toBe(HttpStatusCode.CONFLICT);
+				expect(err.getMessage()).toBe('Repository Error');
+			}
+		}
+	});
+
+	it('Forget Password: should send an email', async () => {
+		mockValidator.validateEmail = vi.fn();
+		mockValidator.handleValidateError = vi.fn();
+		UserMongoRepository.findUserByEmail = vi.fn().mockImplementation(() => userData);
+		mockAuth.getToken = vi.fn().mockImplementation(() => 'token');
+		mockMail.sendEmail = vi.fn();
+
+		await service.forgetPassword(userData.email);
+
+		expect(mockValidator.validateEmail).toBeCalledTimes(1);
+		expect(mockValidator.validateEmail).toBeCalledWith(userData.email);
+		expect(mockAuth.getToken).toBeCalledTimes(1);
+		expect(mockAuth.getToken).toBeCalledWith({ username: userData.username, status: userData.status });
+		expect(mockMail.sendEmail).toBeCalledTimes(1);
+		expect(mockMail.sendEmail).toBeCalledWith(userData.email, 'token', customError);
+	});
+
+	it('Forget Password: should throw an error if email is invalid', async () => {
+		try {
+			mockValidator.validateEmail = vi.fn().mockImplementation(() => {
+				throw new Error('test erro');
+			});
+
+			mockValidator.handleValidateError = vi.fn().mockImplementation(() => {
+				customError.setMessage('Validate Error');
+				customError.setStatus(HttpStatusCode.BAD_REQUEST);
+				throw customError;
+			});
+	
+			await service.forgetPassword(userData.email);
+
+		} catch(err) {
+			if (err instanceof CustomErrorImp) {
+				expect(mockValidator.validateEmail).toBeCalledTimes(1);
+				expect(mockValidator.validateEmail).toBeCalledWith(userData.email);
+				expect(mockValidator.handleValidateError).toBeCalledTimes(1);
+				expect(err.getStatus()).toBe(HttpStatusCode.BAD_REQUEST);
+				expect(err.getMessage()).toBe('Validate Error');
+			}
+		}
+	});
+
+	it('Forget Password: should throw a custom error if repository email throw an error', async () => {
+		try {
+			mockValidator.validateEmail = vi.fn();
+			mockValidator.handleValidateError = vi.fn();
+			UserMongoRepository.findUserByEmail = vi.fn().mockImplementation(() => {
+				throw new Error('test erro');
+			});
+			UserMongoRepository.handleRepositoryError = vi.fn().mockImplementation(() => {
+				customError.setMessage('Repository Error');
+				customError.setStatus(HttpStatusCode.BAD_REQUEST);
+				throw customError;
+			});
+	
+			await service.forgetPassword(userData.email);
+
+		} catch(err) {
+			if (err instanceof CustomErrorImp) {
+				expect(mockValidator.validateEmail).toBeCalledTimes(1);
+				expect(mockValidator.validateEmail).toBeCalledWith(userData.email);
+				expect(mockValidator.handleValidateError).toBeCalledTimes(1);
+				expect(err.getStatus()).toBe(HttpStatusCode.BAD_REQUEST);
 				expect(err.getMessage()).toBe('Repository Error');
 			}
 		}
