@@ -48,6 +48,15 @@ class UserManagerController {
 			next(err);
 		}
 	}
+
+	public async forgetPassword(req: ExtendedRequest, res: Response, next: NextFunction): Promise<Response | undefined> {
+		try {
+			await this.userManagerService.forgetPassword(req.body.email as string);
+			return res.status(HttpStatusCode.NO_CONTENT).json();
+		} catch(err) {
+			next(err);
+		}
+	}
 }
 
 export default new UserManagerController(UserManagerServiceImp);
