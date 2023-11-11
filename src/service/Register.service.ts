@@ -1,27 +1,33 @@
+import Auth from '../interfaces/Auth';
+import BCryptPassword from '../crypt/BCryptPassword';
 import CustomError from '../interfaces/CustomError';
 import CustomErrorImp from '../errors/CustomErrorImp';
-import PayloadValidator from '../interfaces/PayloadValidator';
-import UserService from './User.service';
-import UserMongoRepository from '../repository/UserMongo.repository';
-import UserRepository from '../interfaces/UserRepository';
-import ZodPayloadValidator, { userRegisterSchema } from '../zod/ZodPayloadValidator';
-import Auth from '../interfaces/Auth';
-import JwtAuth from '../auth/JwtAuth';
+import EmailValidator from '../interfaces/EmailValidator';
+import EmailValidatorImp from '../mail/EmailValidatorImp';
 import IRegisterService from '../interfaces/IRegisterService';
-import Status from '../enums/Status';
+import JwtAuth from '../auth/JwtAuth';
+import PayloadValidator from '../interfaces/PayloadValidator';
 import PasswordCrypt from '../interfaces/PasswordCrypt';
-import BCryptPassword from '../crypt/BCryptPassword';
+import Status from '../enums/Status';
+import UserMongoRepository from '../repository/UserMongo.repository';
 import UserPayload from '../interfaces/UserPayload';
+import UserRepository from '../interfaces/UserRepository';
+import UserService from './User.service';
+import ZodPayloadValidator, { userRegisterSchema } from '../zod/ZodPayloadValidator';
 
 export class RegisterService extends UserService implements IRegisterService {
+	private readonly emailValidator: EmailValidator;
+
 	constructor(
 		userRepository: UserRepository,
 		payloadValidator: PayloadValidator,
 		customError: CustomError,
 		auth: Auth,
 		crypt: PasswordCrypt,
+		emailValidator: EmailValidator,
 	) {
 		super(userRepository, payloadValidator, customError, auth, crypt);
+		this.emailValidator = emailValidator;
 	}
 
 	public async registerNewUser(userData: UserPayload): Promise<{ token: string }> {
@@ -29,6 +35,7 @@ export class RegisterService extends UserService implements IRegisterService {
 			this.payloadValidator.validatePayload(userData);
 			const accType = userData.email ? Status.VALID_ACC : Status.TEST_ACC;
 			const cryptedPassword = await this.crypt.cryptPassword(userData.password);
+			userData.email && await this.emailValidator.checkIfEmailIsReal(userData.email, this.customError);
 
 			const { username } = await this.userRepository.registerUser(
 				{
@@ -53,5 +60,6 @@ export default new RegisterService(
 	new ZodPayloadValidator(userRegisterSchema),
 	new CustomErrorImp(),
 	new JwtAuth(),
-	new BCryptPassword()
+	new BCryptPassword(),
+	new EmailValidatorImp(),
 );
