@@ -7,24 +7,30 @@ import CustomErrorImp from '../errors/CustomErrorImp';
 import Auth from '../interfaces/Auth';
 import CustomError from '../interfaces/CustomError';
 import EditUserPayload from '../interfaces/EditUserPayload';
+import Mail from '../interfaces/Mail';
 import PasswordCrypt from '../interfaces/PasswordCrypt';
 import PayloadValidator from '../interfaces/PayloadValidator';
 import User from '../interfaces/User';
 import UserManagerService from '../interfaces/UserManegerService';
 import UserRepository from '../interfaces/UserRepository';
+import SendGridMail from '../mail/SendGridMail';
 import UserMongoRepository from '../repository/UserMongo.repository';
 import ZodPayloadValidator, { editUserSchema } from '../zod/ZodPayloadValidator';
 import UserService from './User.service';
 
 export class UserManagerServiceImp extends UserService implements UserManagerService {
+	private readonly mail: Mail;
+
 	constructor(
 		userRepository: UserRepository,
 		payloadValidator: PayloadValidator,
 		customError: CustomError,
 		auth: Auth,
-		crypt: PasswordCrypt
+		crypt: PasswordCrypt,
+		mail: Mail,
 	) {
 		super(userRepository, payloadValidator, customError, auth, crypt);
+		this.mail = mail;
 	}
 
 	public async editUser(userPayload: EditUserPayload): Promise<void> {
@@ -78,14 +84,7 @@ export class UserManagerServiceImp extends UserService implements UserManagerSer
 
 	public async getUserByUsername(username: string): Promise<{ username: string, email: string | undefined, status: number }> | never {
 		try {
-			const user = await this.userRepository.findUserByUsername(username);
-	
-			if (!user) {
-				this.customError.setMessage(ErrorMessages.USER_NOT_FOUND);
-				this.customError.setStatus(HttpStatusCode.NOT_FOUND);
-				throw this.customError;
-			}
-
+			const user = await this.findUserByUsername(username);
 			return { username: user.username, email: user.email, status: user.status };
 		}catch(err) {
 			this.userRepository.handleRepositoryError(err, this.customError);
@@ -105,7 +104,33 @@ export class UserManagerServiceImp extends UserService implements UserManagerSer
 		}
 	}
 
-	private async checkUser(username: string, password: string): Promise<User> | never {
+	public async forgetPassword(email: string): Promise<void> {
+		try {
+			this.payloadValidator.validateEmail(email);
+			const { username, status } = await this.findUserByEmail(email);
+			const token = this.auth.getToken({ username, status });
+		
+			await this.mail.sendEmail(email, token, this.customError);
+		} catch(err) {
+			this.payloadValidator.handleValidateError(err, this.customError);
+			this.userRepository.handleRepositoryError(err, this.customError);
+			throw this.customError;	
+		}
+	}
+
+	private async findUserByEmail(email: string): Promise<User> | never {
+		const user = await this.userRepository.findUserByEmail(email);
+
+		if (!user) {
+			this.customError.setMessage(ErrorMessages.USER_NOT_FOUND);
+			this.customError.setStatus(HttpStatusCode.NOT_FOUND);
+			throw this.customError;
+		}
+
+		return user;
+	}
+
+	private async findUserByUsername(username: string): Promise<User> | never {
 		const user = await this.userRepository.findUserByUsername(username);
 
 		if (!user) {
@@ -114,11 +139,15 @@ export class UserManagerServiceImp extends UserService implements UserManagerSer
 			throw this.customError;
 		}
 
+		return user;
+	}
+
+	private async checkUser(username: string, password: string): Promise<User> | never {
+		const user = await this.findUserByUsername(username);
 		await this.crypt.checkPassword(password, user.password, this.customError); /* Password check */
 
 		return user;
 	}
-
 }
 
 export default new UserManagerServiceImp(
@@ -127,4 +156,5 @@ export default new UserManagerServiceImp(
 	new CustomErrorImp(),
 	new JwtAuth(),
 	new BCryptPassword(),
+	new SendGridMail(),
 );

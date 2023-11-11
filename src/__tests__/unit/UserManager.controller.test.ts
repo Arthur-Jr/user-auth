@@ -134,4 +134,32 @@ describe('User manager controller tests:', () => {
 		expect(mockNext).toBeCalledTimes(1);
 		expect(mockNext).toBeCalledWith(err);
 	});
+
+	it('Forget password: should return status 204 if email was sent', async () => {
+		UserManagerServiceImp.forgetPassword = vi.fn().mockImplementation(() => null);
+		mockRequest.body = editPayload;
+		await UserManagerController.forgetPassword(mockRequest as ExtendedRequest, mockResponse as Response, mockNext as NextFunction);
+
+		expect(UserManagerServiceImp.forgetPassword).toBeCalledTimes(1);
+		expect(UserManagerServiceImp.forgetPassword).toBeCalledWith(editPayload.email);
+		expect(mockResponse.status).toBeCalledWith(HttpStatusCode.NO_CONTENT);
+		expect(mockResponse.json).toBeCalledTimes(1);
+		expect(mockNext).toBeCalledTimes(0);
+	});
+
+	it('Forget password: should call nextFunction when service throw an error', async () => {
+		const err = new CustomErrorImp('test error', HttpStatusCode.BAD_REQUEST);
+		UserManagerServiceImp.forgetPassword = vi.fn().mockImplementation(() => {
+			throw err;
+		});
+		mockRequest.body = editPayload;
+		await UserManagerController.forgetPassword(mockRequest as ExtendedRequest, mockResponse as Response, mockNext as NextFunction);
+
+		expect(UserManagerServiceImp.forgetPassword).toBeCalledTimes(1);
+		expect(UserManagerServiceImp.forgetPassword).toBeCalledWith(editPayload.email);
+		expect(mockResponse.status).toBeCalledTimes(0);
+		expect(mockResponse.json).toBeCalledTimes(0);
+		expect(mockNext).toBeCalledTimes(1);
+		expect(mockNext).toBeCalledWith(err);
+	});
 });

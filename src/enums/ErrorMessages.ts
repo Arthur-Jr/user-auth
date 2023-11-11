@@ -11,6 +11,7 @@ enum ErrorMessages {
   INVALID_ACC_TYPE = 'Invalid account type!',
   INVALID_EMAIL = 'Invalid email',
   TEST_ACC_DELETED = 'Test account already deleted!',
+  SOMETHING_WENT_WRONG = 'Something went wrong!',
 }
 
 export default ErrorMessages;

@@ -20,6 +20,11 @@ class ZodPayloadValidator implements PayloadValidator {
 		this.schema.parse(userData);
 	}
 
+	public validateEmail(email: string): void {
+		const emailSchema = z.string().email();
+		emailSchema.parse(email);
+	}
+
 	public handleValidateError(err: unknown, customError: CustomError): void {
 		if (err instanceof ZodError) {
 			switch(err.issues[0].code) {
