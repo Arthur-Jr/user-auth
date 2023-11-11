@@ -5,11 +5,11 @@ import Auth from '../interfaces/Auth';
 class JwtAuth implements Auth {
 	private readonly secret: string = process.env.JWT_SECRET_KEY || 'testKey';
 
-	getToken(userData: { username: string; status: number; }): string {
-		return jwt.sign({ data: userData }, this.secret, { algorithm: 'HS256', expiresIn: '7d' });
+	public getToken(userData: { username: string; status: number; }, tokenPeriod?: string): string {
+		return jwt.sign({ data: userData }, this.secret, { algorithm: 'HS256', expiresIn: tokenPeriod || '7d' });
 	}
 
-	decodeToken(token: string): JwtPayload | string {
+	public decodeToken(token: string): JwtPayload | string {
 		return jwt.verify(token, this.secret);
 	}  
 }
