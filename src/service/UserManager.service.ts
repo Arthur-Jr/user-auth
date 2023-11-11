@@ -108,7 +108,7 @@ export class UserManagerServiceImp extends UserService implements UserManagerSer
 		try {
 			this.payloadValidator.validateEmail(email);
 			const { username, status } = await this.findUserByEmail(email);
-			const token = this.auth.getToken({ username, status });
+			const token = this.auth.getToken({ username, status } , '1h');
 		
 			await this.mail.sendEmail(email, token, this.customError);
 		} catch(err) {
