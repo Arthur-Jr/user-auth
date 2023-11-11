@@ -428,7 +428,7 @@ describe('User manager service tests:', () => {
 		}
 	});
 
-	it('Forget Password: should send an email', async () => {
+	it('Forgot Password: should send an email', async () => {
 		mockValidator.validateEmail = vi.fn();
 		mockValidator.handleValidateError = vi.fn();
 		UserMongoRepository.findUserByEmail = vi.fn().mockImplementation(() => userData);
@@ -440,12 +440,12 @@ describe('User manager service tests:', () => {
 		expect(mockValidator.validateEmail).toBeCalledTimes(1);
 		expect(mockValidator.validateEmail).toBeCalledWith(userData.email);
 		expect(mockAuth.getToken).toBeCalledTimes(1);
-		expect(mockAuth.getToken).toBeCalledWith({ username: userData.username, status: userData.status });
+		expect(mockAuth.getToken).toBeCalledWith({ username: userData.username, status: userData.status }, '1h');
 		expect(mockMail.sendEmail).toBeCalledTimes(1);
 		expect(mockMail.sendEmail).toBeCalledWith(userData.email, 'token', customError);
 	});
 
-	it('Forget Password: should throw an error if email is invalid', async () => {
+	it('Forgot Password: should throw an error if email is invalid', async () => {
 		try {
 			mockValidator.validateEmail = vi.fn().mockImplementation(() => {
 				throw new Error('test erro');
@@ -470,7 +470,7 @@ describe('User manager service tests:', () => {
 		}
 	});
 
-	it('Forget Password: should throw a custom error if repository email throw an error', async () => {
+	it('Forgot Password: should throw a custom error if repository email throw an error', async () => {
 		try {
 			mockValidator.validateEmail = vi.fn();
 			mockValidator.handleValidateError = vi.fn();
