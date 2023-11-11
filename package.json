@@ -5,9 +5,9 @@
   "main": "src/api/index.ts",
   "type": "module",
   "scripts": {
-    "start": "tsx .",
+    "start": "tsc .",
     "dev": "tsx watch .",
-    "build": "tsup src",
+    "build": "tsc src",
     "test": "vitest"
   },
   "keywords": [],
