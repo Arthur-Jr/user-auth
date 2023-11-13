@@ -4,6 +4,9 @@
   "description": "",
   "main": "src/api/index.ts",
   "type": "module",
+  "engines": {
+    "node": "18"
+  },
   "scripts": {
     "start": "tsx .",
     "dev": "tsx watch .",
