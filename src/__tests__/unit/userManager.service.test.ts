@@ -440,7 +440,7 @@ describe('User manager service tests:', () => {
 		expect(mockValidator.validateEmail).toBeCalledTimes(1);
 		expect(mockValidator.validateEmail).toBeCalledWith(userData.email);
 		expect(mockAuth.getToken).toBeCalledTimes(1);
-		expect(mockAuth.getToken).toBeCalledWith({ username: userData.username, status: userData.status }, '1h');
+		expect(mockAuth.getToken).toBeCalledWith({ username: userData.username, status: userData.status, reset: true }, '1h');
 		expect(mockMail.sendEmail).toBeCalledTimes(1);
 		expect(mockMail.sendEmail).toBeCalledWith(userData.email, 'token', customError);
 	});
@@ -498,6 +498,7 @@ describe('User manager service tests:', () => {
 
 	it('Reset Password: should change password', async () => {
 		mockValidator.validatePayload = vi.fn();
+		mockCrypt.cryptPassword = vi.fn().mockImplementation(() => cryptedPassword);
 		mockValidator.handleValidateError = vi.fn();
 		UserMongoRepository.editPassword = vi.fn();
 
@@ -505,8 +506,10 @@ describe('User manager service tests:', () => {
 
 		expect(mockValidator.validatePayload).toBeCalledTimes(1);
 		expect(mockValidator.validatePayload).toBeCalledWith(userData);
+		expect(mockCrypt.cryptPassword).toBeCalledTimes(1);
+		expect(mockCrypt.cryptPassword).toBeCalledWith(userData.password);
 		expect(mockValidator.handleValidateError).toBeCalledTimes(0);
 		expect(UserMongoRepository.editPassword).toBeCalledTimes(1);
-		expect(UserMongoRepository.editPassword).toBeCalledWith(userData.username, userData.password);
+		expect(UserMongoRepository.editPassword).toBeCalledWith(userData.username, cryptedPassword);
 	});
 });
