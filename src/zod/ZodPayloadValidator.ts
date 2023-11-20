@@ -25,6 +25,11 @@ class ZodPayloadValidator implements PayloadValidator {
 		emailSchema.parse(email);
 	}
 
+	public validatePassword(password: string): void {
+		const passwordSchema = z.string().min(6, { message: ErrorMessages.SHORT_PASSWORD });
+		passwordSchema.parse(password);
+	}
+
 	public handleValidateError(err: unknown, customError: CustomError): void {
 		if (err instanceof ZodError) {
 			switch(err.issues[0].code) {
