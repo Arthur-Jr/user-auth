@@ -26,7 +26,8 @@ class ZodPayloadValidator implements PayloadValidator {
 	}
 
 	public validatePassword(password: string): void {
-		const passwordSchema = z.string().min(6, { message: ErrorMessages.SHORT_PASSWORD });
+		const passwordSchema = z.string().min(6, { message: ErrorMessages.SHORT_PASSWORD })
+			.refine((value) => alphaNumRegex.test(value), { message: ErrorMessages.INVALID_PASSWORD });
 		passwordSchema.parse(password);
 	}
 
