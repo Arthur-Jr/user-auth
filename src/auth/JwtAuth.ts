@@ -5,7 +5,7 @@ import Auth from '../interfaces/Auth';
 class JwtAuth implements Auth {
 	private readonly secret: string = process.env.JWT_SECRET_KEY || 'testKey';
 
-	public getToken(userData: { username: string; status: number; }, tokenPeriod?: string): string {
+	public getToken(userData: { username: string; status: number; reset?: boolean }, tokenPeriod?: string): string {
 		return jwt.sign({ data: userData }, this.secret, { algorithm: 'HS256', expiresIn: tokenPeriod || '7d' });
 	}
 

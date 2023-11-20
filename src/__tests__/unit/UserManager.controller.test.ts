@@ -162,4 +162,32 @@ describe('User manager controller tests:', () => {
 		expect(mockNext).toBeCalledTimes(1);
 		expect(mockNext).toBeCalledWith(err);
 	});
+
+	it('Reset password: should return status 204 if password was reseted', async () => {
+		UserManagerServiceImp.resetPassword = vi.fn().mockImplementation(() => null);
+		mockRequest.body = editPayload;
+		await UserManagerController.resetPassword(mockRequest as ExtendedRequest, mockResponse as Response, mockNext as NextFunction);
+
+		expect(UserManagerServiceImp.resetPassword).toBeCalledTimes(1);
+		expect(UserManagerServiceImp.resetPassword).toBeCalledWith(editPayload);
+		expect(mockResponse.status).toBeCalledWith(HttpStatusCode.NO_CONTENT);
+		expect(mockResponse.json).toBeCalledTimes(1);
+		expect(mockNext).toBeCalledTimes(0);
+	});
+
+	it('Reset password: should call nextFunction when service throw an error', async () => {
+		const err = new CustomErrorImp('test error', HttpStatusCode.BAD_REQUEST);
+		UserManagerServiceImp.resetPassword = vi.fn().mockImplementation(() => {
+			throw err;
+		});
+		mockRequest.body = editPayload;
+		await UserManagerController.resetPassword(mockRequest as ExtendedRequest, mockResponse as Response, mockNext as NextFunction);
+
+		expect(UserManagerServiceImp.resetPassword).toBeCalledTimes(1);
+		expect(UserManagerServiceImp.resetPassword).toBeCalledWith(editPayload);
+		expect(mockResponse.status).toBeCalledTimes(0);
+		expect(mockResponse.json).toBeCalledTimes(0);
+		expect(mockNext).toBeCalledTimes(1);
+		expect(mockNext).toBeCalledWith(err);
+	});
 });

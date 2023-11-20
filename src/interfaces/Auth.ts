@@ -1,5 +1,5 @@
 interface Auth {
-  getToken(userData: { username: string, status: number }, tokenPeriod?: string): string,
+  getToken(userData: { username: string, status: number, reset?: boolean }, tokenPeriod?: string): string,
   decodeToken(token: string): unknown,
 }
 
