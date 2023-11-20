@@ -15,6 +15,10 @@ interface authPayload {
   exp: number
 }
 
+interface authResetPayload extends authPayload {
+	data: { username: string, status: number, reset?: boolean }
+}
+
 export class AuthMiddleware {
 	private readonly auth: Auth;
 	private readonly customError: CustomError;
@@ -39,6 +43,32 @@ export class AuthMiddleware {
 			const { data } = this.auth.decodeToken(authorization) as authPayload;
 
 			if (!data || !data.username) {
+				this.ThrowAuthError();
+				throw this.customError;
+			}
+
+			this.payloadValidator.validatePayload({ username: data.username });
+
+			req.body.username = data.username;
+			next();
+		} catch(err) {
+			this.payloadValidator.handleValidateError(err, this.customError);
+			this.ThrowAuthError();
+		}
+	}
+
+	public handleResetAuthMiddleware(req: ExtendedRequest, _res: Response, next: NextFunction): void {
+		try {
+			const { authorization } = req.headers;
+			
+			if (!authorization) {
+				this.ThrowAuthError();
+				throw this.customError;
+			}
+    
+			const { data } = this.auth.decodeToken(authorization) as authResetPayload;
+
+			if (!data || !data.username || !data.reset) {
 				this.ThrowAuthError();
 				throw this.customError;
 			}
