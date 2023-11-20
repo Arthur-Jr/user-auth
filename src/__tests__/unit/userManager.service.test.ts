@@ -495,4 +495,18 @@ describe('User manager service tests:', () => {
 			}
 		}
 	});
+
+	it('Reset Password: should change password', async () => {
+		mockValidator.validatePayload = vi.fn();
+		mockValidator.handleValidateError = vi.fn();
+		UserMongoRepository.editPassword = vi.fn();
+
+		await service.resetPassword(userData);
+
+		expect(mockValidator.validatePayload).toBeCalledTimes(1);
+		expect(mockValidator.validatePayload).toBeCalledWith(userData);
+		expect(mockValidator.handleValidateError).toBeCalledTimes(0);
+		expect(UserMongoRepository.editPassword).toBeCalledTimes(1);
+		expect(UserMongoRepository.editPassword).toBeCalledWith(userData.username, userData.password);
+	});
 });

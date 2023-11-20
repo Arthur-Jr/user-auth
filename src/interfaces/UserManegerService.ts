@@ -6,6 +6,7 @@ interface UserManagerService {
   getUserByUsername(username: string): Promise<{ username: string, email: string | undefined, status: number }> | never,
   deleteUser(userPayload: EditUserPayload): Promise<void>,
   forgetPassword(email: string): Promise<void>,
+  resetPassword(userData: EditUserPayload): Promise<void>,
 }
 
 export default UserManagerService;

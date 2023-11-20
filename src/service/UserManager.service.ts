@@ -118,6 +118,17 @@ export class UserManagerServiceImp extends UserService implements UserManagerSer
 		}
 	}
 
+	public async resetPassword(userData: EditUserPayload): Promise<void> {
+		try {
+			this.payloadValidator.validatePayload(userData);
+			await this.userRepository.editPassword(userData.username, userData.password);
+		} catch(err) {
+			this.payloadValidator.handleValidateError(err, this.customError);
+			this.userRepository.handleRepositoryError(err, this.customError);
+			throw this.customError;	
+		}
+	}
+
 	private async findUserByEmail(email: string): Promise<User> | never {
 		const user = await this.userRepository.findUserByEmail(email);
 
