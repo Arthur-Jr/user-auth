@@ -29,7 +29,7 @@ class SendGridMail implements Mail {
 			<br />
 			<br />
 
-			<a href="${this.FRONT_URL}/${token}"><strong>RESET PASSWORD</strong></a>!
+			<a href="${this.FRONT_URL}/reset/${token}"><strong>RESET PASSWORD</strong></a>!
 			<br />
 			<br />
 			<br />

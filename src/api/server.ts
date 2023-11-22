@@ -30,8 +30,9 @@ export default class App {
 	}
 
 	public middlewares(): void {
+		const origin = process.env.FRONT_URL;
 		this.express.use(bodyParser.json());
-		this.express.use(cors());
+		this.express.use(cors({ origin }));
 	}
 
 	public errorMiddleware(): void {
