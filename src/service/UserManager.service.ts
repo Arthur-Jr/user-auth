@@ -38,7 +38,7 @@ export class UserManagerServiceImp extends UserService implements UserManagerSer
 			this.payloadValidator.validatePayload(userPayload);
 			const user = await this.checkUser(userPayload.username, userPayload.password);
 
-			if (user.status !== Status.VALID_ACC) {
+			if (user.status !== Status.VALID_ACC && userPayload.email) {
 				this.customError.setMessage(ErrorMessages.INVALID_ACC_TYPE);
 				this.customError.setStatus(HttpStatusCode.BAD_REQUEST);
 				throw this.customError;
