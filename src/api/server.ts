@@ -2,8 +2,8 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import express from 'express';
 
-import ErrorMiddleware from '../middlewares/ErrorMiddleware';
 import DbConnection from '../interfaces/DbConnection';
+import ErrorMiddleware from '../middlewares/ErrorMiddleware';
 import userRouter from '../router/user.router';
 
 export default class App {
@@ -30,9 +30,9 @@ export default class App {
 	}
 
 	public middlewares(): void {
-		const origin = process.env.FRONT_URL;
+		// const origin = process.env.FRONT_URL;
 		this.express.use(bodyParser.json());
-		this.express.use(cors({ origin }));
+		this.express.use(cors());
 	}
 
 	public errorMiddleware(): void {
