@@ -1,16 +1,19 @@
-import { NextFunction, Response } from 'express';
+import { CookieOptions, NextFunction, Response } from 'express';
 
+import constants from '../constants/constants';
+import HttpStatusCode from '../enums/HttpStatusCode';
+import EditUserPayload from '../interfaces/EditUserPayload';
 import ExtendedRequest from '../interfaces/ExtendedRequest';
 import UserManagerService from '../interfaces/UserManegerService';
 import UserManagerServiceImp from '../service/UserManager.service';
-import EditUserPayload from '../interfaces/EditUserPayload';
-import HttpStatusCode from '../enums/HttpStatusCode';
 
 class UserManagerController {
 	private readonly userManagerService: UserManagerService;
+	private readonly cookieOptions: CookieOptions;
 
-	constructor(userManagerService: UserManagerService) {
+	constructor(userManagerService: UserManagerService, cookieOptions: CookieOptions) {
 		this.userManagerService = userManagerService;
+		this.cookieOptions = cookieOptions;
 	}
   
 	public async editUser(req: ExtendedRequest, res: Response, next: NextFunction): Promise<Response | undefined> {
@@ -24,8 +27,10 @@ class UserManagerController {
 
 	public async addEmailToTestUser(req: ExtendedRequest, res: Response, next: NextFunction): Promise<Response | undefined> {
 		try {
-			const token = await this.userManagerService.addEmailToTestUser(req.body as EditUserPayload);
-			return res.status(HttpStatusCode.OK).json(token);
+			const { token } = await this.userManagerService.addEmailToTestUser(req.body as EditUserPayload);
+
+			res.cookie(constants.cookieTokenKeyName, token, this.cookieOptions);
+			return res.status(HttpStatusCode.OK).json('Email Added!');
 		} catch(err) {
 			next(err);
 		}
@@ -68,4 +73,4 @@ class UserManagerController {
 	}
 }
 
-export default new UserManagerController(UserManagerServiceImp);
+export default new UserManagerController(UserManagerServiceImp, constants.cookieDefaultSettings);

@@ -1,19 +1,21 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { describe, it, vi, expect, afterEach } from 'vitest';
 import { NextFunction, Response } from 'express';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import constants from '../../constants/constants';
 import UserManagerController from '../../controller/UserManager.controller';
-import UserManagerServiceImp from '../../service/UserManager.service';
 import HttpStatusCode from '../../enums/HttpStatusCode';
+import Status from '../../enums/Status';
 import CustomErrorImp from '../../errors/CustomErrorImp';
 import ExtendedRequest from '../../interfaces/ExtendedRequest';
-import Status from '../../enums/Status';
+import UserManagerServiceImp from '../../service/UserManager.service';
 
 describe('User manager controller tests:', () => {
 	const mockRequest = { body: {} };
 	const mockResponse = {
 		status: vi.fn().mockImplementation((_x: number) => mockResponse),
 		json: vi.fn().mockImplementation((x: unknown) => x),
+		cookie: vi.fn().mockImplementation((x: unknown, _token: unknown) => x),
 	} as Partial<Response>;
 	const mockNext = vi.fn();
 	const editPayload = { username: 'test', password: 'pass', email: 'email@eamil.com', newPassword: 'password' };
@@ -60,6 +62,8 @@ describe('User manager controller tests:', () => {
 		expect(UserManagerServiceImp.addEmailToTestUser).toBeCalledWith(editPayload);
 		expect(mockResponse.status).toBeCalledWith(HttpStatusCode.OK);
 		expect(mockResponse.json).toBeCalledTimes(1);
+		expect(mockResponse.cookie).toBeCalledTimes(1);
+		expect(mockResponse.cookie).toBeCalledWith(constants.cookieTokenKeyName, 'token', constants.cookieDefaultSettings);
 		expect(mockNext).toBeCalledTimes(0);
 	});
 

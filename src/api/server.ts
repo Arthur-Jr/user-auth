@@ -1,4 +1,5 @@
 import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 
@@ -32,7 +33,8 @@ export default class App {
 	public middlewares(): void {
 		// const origin = process.env.FRONT_URL;
 		this.express.use(bodyParser.json());
-		this.express.use(cors());
+		this.express.use(cookieParser());
+		this.express.use(cors({ credentials: true, allowedHeaders: ['content-type'], origin: true }));
 	}
 
 	public errorMiddleware(): void {
