@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { describe, it, vi, expect, afterEach, beforeEach } from 'vitest';
 import { Request, Response } from 'express';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import CustomErrorImp from '../../errors/CustomErrorImp';
-import ErrorMessages from '../../enums/ErrorMessages';
-import ErrorMiddleware from '../../middlewares/ErrorMiddleware';
-import HttpStatusCode from '../../enums/HttpStatusCode';
-import { AuthMiddleware } from '../../middlewares/AuthMiddeware';
 import JwtAuth from '../../auth/JwtAuth';
+import ErrorMessages from '../../enums/ErrorMessages';
+import HttpStatusCode from '../../enums/HttpStatusCode';
+import CustomErrorImp from '../../errors/CustomErrorImp';
 import ExtendedRequest from '../../interfaces/ExtendedRequest';
+import { AuthMiddleware } from '../../middlewares/AuthMiddeware';
+import ErrorMiddleware from '../../middlewares/ErrorMiddleware';
 import ZodPayloadValidator, { tokenSchema } from '../../zod/ZodPayloadValidator';
 
 describe('Middlewares tests:', () => {
-	const mockRequest = { body: { username: '' }, headers: { authorization: 'testToken' } };
+	const mockRequest = { body: { username: '' }, cookies: { userToken: 'testToken' } };
 	const mockResponse = {
 		status: vi.fn().mockImplementation((_x: number) => mockResponse),
 		json: vi.fn().mockImplementation((x: unknown) => x),
@@ -62,11 +62,11 @@ describe('Middlewares tests:', () => {
 		}
 	});
 
-	it('Auth middleware: should throw error if header.authorization does not exists', () => {
+	it('Auth middleware: should throw error if cookies.userToken does not exists', () => {
 		try {
-			mockRequest.headers.authorization = '';
+			mockRequest.cookies.userToken = '';
 			AuthMiddeware.handleAuthMiddleware(mockRequest as ExtendedRequest, mockResponse as Response, mockNext);
-	
+
 		} catch(err) {
 			if (err instanceof CustomErrorImp) {
 				expect(err.getStatus()).toBe(HttpStatusCode.UNAUTHORIZED);
