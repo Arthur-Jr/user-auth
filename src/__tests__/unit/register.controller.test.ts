@@ -1,17 +1,19 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { describe, it, vi, expect, afterEach } from 'vitest';
 import { NextFunction, Request, Response } from 'express';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import constants from '../../constants/constants';
 import RegisterController from '../../controller/Register.controller';
-import RegisterService from '../../service/Register.service';
 import HttpStatusCode from '../../enums/HttpStatusCode';
 import CustomErrorImp from '../../errors/CustomErrorImp';
+import RegisterService from '../../service/Register.service';
 
 describe('Register controller unit tests:', () => {
 	const mockRequest = { body: {} };
 	const mockResponse = {
 		status: vi.fn().mockImplementation((_x: number) => mockResponse),
 		json: vi.fn().mockImplementation((x: unknown) => x),
+		cookie: vi.fn().mockImplementation((x: unknown, _token: unknown) => x),
 	} as Partial<Response>;
 	const mockNext = vi.fn();
 
@@ -19,7 +21,7 @@ describe('Register controller unit tests:', () => {
 		vi.clearAllMocks();
 	});
 
-	it('Register new user: should return status 201 and a auth-token!', async () => {
+	it('Register new user: should return status 201 and set token on cookie!', async () => {
 		const expectedResponseData =  { token: 'test' };
 		RegisterService.registerNewUser = vi.fn().mockImplementation(() => (expectedResponseData));
 		await RegisterController.registerNewUser(mockRequest as Request, mockResponse as Response, mockNext as NextFunction);
@@ -27,7 +29,8 @@ describe('Register controller unit tests:', () => {
 		expect(RegisterService.registerNewUser).toBeCalledTimes(1);
 		expect(RegisterService.registerNewUser).toBeCalledWith(mockRequest.body);
 		expect(mockResponse.status).toBeCalledWith(HttpStatusCode.CREATED);
-		expect(mockResponse.json).toBeCalledWith(expectedResponseData);
+		expect(mockResponse.cookie).toBeCalledTimes(1);
+		expect(mockResponse.cookie).toBeCalledWith(constants.cookieTokenKeyName, expectedResponseData.token, constants.cookieDefaultSettings);
 		expect(mockNext).toBeCalledTimes(0);
 	});
 
