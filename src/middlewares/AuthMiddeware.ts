@@ -1,11 +1,11 @@
 import { NextFunction, Response } from 'express';
 import JwtAuth from '../auth/JwtAuth';
+import ErrorMessages from '../enums/ErrorMessages';
+import HttpStatusCode from '../enums/HttpStatusCode';
+import CustomErrorImp from '../errors/CustomErrorImp';
 import Auth from '../interfaces/Auth';
 import CustomError from '../interfaces/CustomError';
-import CustomErrorImp from '../errors/CustomErrorImp';
-import HttpStatusCode from '../enums/HttpStatusCode';
 import ExtendedRequest from '../interfaces/ExtendedRequest';
-import ErrorMessages from '../enums/ErrorMessages';
 import PayloadValidator from '../interfaces/PayloadValidator';
 import ZodPayloadValidator, { tokenSchema } from '../zod/ZodPayloadValidator';
 
@@ -33,14 +33,14 @@ export class AuthMiddleware {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	public handleAuthMiddleware(req: ExtendedRequest, _res: Response, next: NextFunction): void {
 		try {
-			const { authorization } = req.headers;
+			const { userToken } = req.cookies;
 			
-			if (!authorization) {
+			if (!userToken) {
 				this.ThrowAuthError();
 				throw this.customError;
 			}
     
-			const { data } = this.auth.decodeToken(authorization) as authPayload;
+			const { data } = this.auth.decodeToken(userToken) as authPayload;
 
 			if (!data || !data.username) {
 				this.ThrowAuthError();
