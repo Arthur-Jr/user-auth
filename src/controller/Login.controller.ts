@@ -24,6 +24,15 @@ class LoginController {
 			next(err);
 		}
 	}
+
+	public async logout(_req: Request, res: Response, next: NextFunction): Promise<Response | undefined> {
+		try {
+			res.clearCookie(constants.cookieTokenKeyName);
+			return res.status(HttpStatusCode.NO_CONTENT).json();
+		} catch(err: unknown) {
+			next(err);
+		}
+	}
 }
 
 export default new LoginController(
