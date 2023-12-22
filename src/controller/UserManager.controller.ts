@@ -30,7 +30,7 @@ class UserManagerController {
 			const { token } = await this.userManagerService.addEmailToTestUser(req.body as EditUserPayload);
 
 			res.cookie(constants.cookieTokenKeyName, token, this.cookieOptions);
-			return res.status(HttpStatusCode.OK).json('Email Added!');
+			return res.status(HttpStatusCode.OK).json({ message: 'Email Added!' });
 		} catch(err) {
 			next(err);
 		}

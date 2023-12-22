@@ -19,7 +19,7 @@ class LoginController {
 			const { token } = await this.loginService.login(req.body);
 
 			res.cookie(constants.cookieTokenKeyName, token, this.cookieOptions);
-			return res.status(HttpStatusCode.OK).json('Login Successful!');
+			return res.status(HttpStatusCode.OK).json({ message: 'Login Successful!' });
 		} catch(err: unknown) {
 			next(err);
 		}

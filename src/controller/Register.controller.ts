@@ -18,7 +18,7 @@ class RegisterController {
 			const { token } = await this.userService.registerNewUser(req.body);
 
 			res.cookie(constants.cookieTokenKeyName, token, this.cookieOptions);
-			return res.status(HttpStatusCode.CREATED).json('Register Successful!');
+			return res.status(HttpStatusCode.CREATED).json({ message: 'Register Successful!' });
 		} catch(err) {
 			next(err);
 		}
