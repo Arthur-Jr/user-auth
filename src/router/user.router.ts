@@ -1,7 +1,7 @@
 import express from 'express';
 
-import RegisterController from '../controller/Register.controller';
 import LoginController from '../controller/Login.controller';
+import RegisterController from '../controller/Register.controller';
 import UserManagerController from '../controller/UserManager.controller';
 import AuthMiddeware from '../middlewares/AuthMiddeware';
 
@@ -22,5 +22,6 @@ userRouter.put('/', (req, res, next) => UserManagerController.editUser(req, res,
 userRouter.put('/test-email', (req, res, next) => UserManagerController.addEmailToTestUser(req, res, next));
 userRouter.get('/', (req, res, next) => UserManagerController.getUserByUsername(req, res, next));
 userRouter.delete('/',(req, res, next) => UserManagerController.deleteUser(req, res, next));
+userRouter.post('/logout', (req, res, next) => LoginController.logout(req, res, next));
 
 export default userRouter;
