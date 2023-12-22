@@ -34,7 +34,7 @@ export default class App {
 		// const origin = process.env.FRONT_URL;
 		this.express.use(bodyParser.json());
 		this.express.use(cookieParser());
-		this.express.use(cors({ credentials: true, allowedHeaders: ['content-type'], origin: true }));
+		this.express.use(cors({ credentials: true, origin: true }));
 	}
 
 	public errorMiddleware(): void {
