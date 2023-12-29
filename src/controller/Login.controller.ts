@@ -25,6 +25,16 @@ class LoginController {
 		}
 	}
 
+	public async loginToken(req: Request, res: Response, next: NextFunction): Promise<Response | undefined> {
+		try {
+			const { token } = await this.loginService.login(req.body);
+
+			return res.status(HttpStatusCode.OK).json({ token });
+		} catch(err: unknown) {
+			next(err);
+		}
+	}
+
 	public async logout(_req: Request, res: Response, next: NextFunction): Promise<Response | undefined> {
 		try {
 			res.clearCookie(constants.cookieTokenKeyName, this.cookieOptions);

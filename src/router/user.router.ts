@@ -10,6 +10,7 @@ const userRouter = express.Router();
 userRouter.get('/start', (_req, res) => res.status(204).json());
 userRouter.post('/register', (req, res, next) => RegisterController.registerNewUser(req, res, next));
 userRouter.post('/login', (req, res, next) => LoginController.login(req, res, next));
+userRouter.post('/login-token', (req, res, next) => LoginController.loginToken(req, res, next));
 userRouter.post('/forgot-password', (req, res, next) => UserManagerController.forgetPassword(req, res, next));
 
 userRouter.put('/reset',
